@@ -45,7 +45,6 @@ import {
   formatDate,
   formatDateTime,
   daysBetween,
-  STATUS_LABELS,
 } from "@/lib/obra-utils";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
