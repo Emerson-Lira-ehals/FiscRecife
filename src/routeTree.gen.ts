@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ChecklistRouteImport } from './routes/checklist'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ObrasIdRouteImport } from './routes/obras.$id'
@@ -23,6 +24,11 @@ const RelatoriosRoute = RelatoriosRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChecklistRoute = ChecklistRouteImport.update({
+  id: '/checklist',
+  path: '/checklist',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -44,6 +50,7 @@ const ObrasIdRoute = ObrasIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/checklist': typeof ChecklistRoute
   '/dashboard': typeof DashboardRoute
   '/relatorios': typeof RelatoriosRoute
   '/obras/$id': typeof ObrasIdRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/checklist': typeof ChecklistRoute
   '/dashboard': typeof DashboardRoute
   '/relatorios': typeof RelatoriosRoute
   '/obras/$id': typeof ObrasIdRoute
@@ -59,21 +67,36 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/checklist': typeof ChecklistRoute
   '/dashboard': typeof DashboardRoute
   '/relatorios': typeof RelatoriosRoute
   '/obras/$id': typeof ObrasIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/relatorios' | '/obras/$id'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/checklist'
+    | '/dashboard'
+    | '/relatorios'
+    | '/obras/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/relatorios' | '/obras/$id'
-  id: '__root__' | '/' | '/auth' | '/dashboard' | '/relatorios' | '/obras/$id'
+  to: '/' | '/auth' | '/checklist' | '/dashboard' | '/relatorios' | '/obras/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/checklist'
+    | '/dashboard'
+    | '/relatorios'
+    | '/obras/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  ChecklistRoute: typeof ChecklistRoute
   DashboardRoute: typeof DashboardRoute
   RelatoriosRoute: typeof RelatoriosRoute
   ObrasIdRoute: typeof ObrasIdRoute
@@ -93,6 +116,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checklist': {
+      id: '/checklist'
+      path: '/checklist'
+      fullPath: '/checklist'
+      preLoaderRoute: typeof ChecklistRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -122,6 +152,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  ChecklistRoute: ChecklistRoute,
   DashboardRoute: DashboardRoute,
   RelatoriosRoute: RelatoriosRoute,
   ObrasIdRoute: ObrasIdRoute,
