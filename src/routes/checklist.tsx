@@ -98,10 +98,10 @@ function Checklist() {
         obra_id: obraId,
         fiscal_id: user!.id,
         data_inspecao: data,
-        resultado: resultado as unknown as object,
+        resultado: resultado as unknown as Json,
         observacao_geral: obsGeral.trim(),
-        fotos: fotos as unknown as object,
-        documentos: documentos as unknown as object,
+        fotos: fotos as unknown as Json,
+        documentos: documentos as unknown as Json,
       });
       if (error) throw new Error(error.message);
       await logAuditoria(obraId, "Registrou inspeção fiscal", "checklist_fiscal", user!.id, profile?.nome || "Fiscal");
