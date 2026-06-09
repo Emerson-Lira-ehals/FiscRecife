@@ -5,6 +5,7 @@ import { ClipboardCheck, Loader2, Plus, Upload, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { fetchObras, fetchChecklists, logAuditoria } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
 import { AuthRequired } from "@/components/AuthRequired";
 import { formatDate, ROLE_LABELS } from "@/lib/obra-utils";
