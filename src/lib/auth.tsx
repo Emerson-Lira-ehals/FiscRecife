@@ -41,7 +41,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 async function loadRoleAndProfile(userId: string) {
   const [{ data: roles }, { data: profile }] = await Promise.all([
     supabase.from("user_roles").select("role").eq("user_id", userId),
-    supabase.from("profiles").select("id, nome, email").eq("id", userId).maybeSingle(),
+    supabase.from("profiles").select("id, nome, email, ativo").eq("id", userId).maybeSingle(),
   ]);
   const role = (roles && roles.length > 0 ? roles[0].role : null) as AppRole | null;
   return { role, profile: (profile as Profile | null) ?? null };
