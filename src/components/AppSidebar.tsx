@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LogIn, LayoutDashboard, FileBarChart, ClipboardCheck, type LucideIcon, X } from "lucide-react";
+import { LogIn, LayoutDashboard, FileBarChart, ClipboardCheck, Users, type LucideIcon, X } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useUI } from "@/lib/ui-context";
 import { useAuth } from "@/lib/auth";
@@ -11,6 +11,7 @@ interface NavItem {
   to: string;
   icon: LucideIcon;
   requiresAuth: boolean;
+  requiresAdmin?: boolean;
 }
 
 const items: NavItem[] = [
@@ -18,6 +19,7 @@ const items: NavItem[] = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard, requiresAuth: true },
   { label: "Relatórios", to: "/relatorios", icon: FileBarChart, requiresAuth: true },
   { label: "Checklist Fiscal", to: "/checklist", icon: ClipboardCheck, requiresAuth: true },
+  { label: "Usuários", to: "/admin/usuarios", icon: Users, requiresAuth: true, requiresAdmin: true },
 ];
 
 export function AppSidebar() {
