@@ -110,6 +110,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
   }, []);
 
+  const isAdmin = role === "admin";
+  const can = useCallback(
+    (r: AppRole) => role === "admin" || role === r,
+    [role],
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -118,10 +124,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role,
       loading,
       isAuthenticated: !!user && !!role,
+      isAdmin,
+      can,
       signIn,
       signOut,
     }),
-    [user, session, profile, role, loading, signIn, signOut],
+    [user, session, profile, role, loading, isAdmin, can, signIn, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
