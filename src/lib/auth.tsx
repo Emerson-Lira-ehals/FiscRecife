@@ -24,6 +24,9 @@ interface AuthContextValue {
   role: AppRole | null;
   loading: boolean;
   isAuthenticated: boolean;
+  isAdmin: boolean;
+  /** True for admins (full access) or when the user holds the given role. */
+  can: (role: AppRole) => boolean;
   signIn: (
     email: string,
     password: string,
