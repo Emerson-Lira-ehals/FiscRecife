@@ -15,6 +15,7 @@ interface Profile {
   id: string;
   nome: string;
   email: string;
+  ativo: boolean;
 }
 
 interface AuthContextValue {
