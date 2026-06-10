@@ -32,33 +32,41 @@ export function resolveFoto(ref: string | null | undefined): string {
 }
 
 export const ROLE_LABELS: Record<AppRole, string> = {
+  admin: "Administrador Master",
+  prefeitura: "Prefeitura",
   fiscal: "Fiscal de Obra",
   gestor: "Gestor/Responsável da Obra",
   agente: "Agente da Prefeitura",
 };
 
 export const STATUS_LABELS: Record<ObraStatus, string> = {
-  planejamento: "Planejamento",
+  planejamento: "Planejada",
+  licitacao: "Licitação",
   em_andamento: "Em andamento",
   atrasada: "Atrasada",
   paralisada: "Paralisada",
   concluida: "Concluída",
+  cancelada: "Cancelada",
 };
 
 export const STATUS_CLASSES: Record<ObraStatus, string> = {
   planejamento: "bg-secondary text-secondary-foreground",
+  licitacao: "bg-primary/5 text-primary border border-primary/20",
   em_andamento: "bg-primary/10 text-primary border border-primary/20",
   atrasada: "bg-warning/15 text-warning border border-warning/30",
   paralisada: "bg-danger/10 text-danger border border-danger/30",
   concluida: "bg-success/15 text-success border border-success/30",
+  cancelada: "bg-muted text-muted-foreground border border-border",
 };
 
 export const STATUS_DOT: Record<ObraStatus, string> = {
   planejamento: "bg-muted-foreground",
+  licitacao: "bg-primary/60",
   em_andamento: "bg-primary",
   atrasada: "bg-warning",
   paralisada: "bg-danger",
   concluida: "bg-success",
+  cancelada: "bg-muted-foreground",
 };
 
 export function formatCurrency(value: number | null | undefined): string {

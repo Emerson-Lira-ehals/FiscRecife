@@ -135,3 +135,47 @@ export async function logAuditoria(
     usuario_nome: usuarioNome,
   });
 }
+
+export type AppRole = Database["public"]["Enums"]["app_role"];
+
+export interface UsuarioRow {
+  id: string;
+  nome: string;
+  email: string;
+  ativo: boolean;
+  criado_em: string;
+  role: AppRole | null;
+}
+
+export async function fetchUsuarios(): Promise<UsuarioRow[]> {
+  const [{ data: profiles, error: e1 }, { data: roles, error: e2 }] = await Promise.all([
+    supabase.from("profiles").select("id, nome, email, ativo, criado_em").order("criado_em"),
+    supabase.from("user_roles").select("user_id, role"),
+  ]);
+  if (e1) throw new Error(e1.message);
+  if (e2) throw new Error(e2.message);
+  const roleMap: Record<string, AppRole> = {};
+  (roles ?? []).forEach((r) => {
+    roleMap[r.user_id] = r.role as AppRole;
+  });
+  return (profiles ?? []).map((p) => ({
+    id: p.id,
+    nome: p.nome,
+    email: p.email,
+    ativo: (p as { ativo?: boolean }).ativo ?? true,
+    criado_em: p.criado_em,
+    role: roleMap[p.id] ?? null,
+  }));
+}
+
+export async function setUsuarioAtivo(userId: string, ativo: boolean) {
+  const { error } = await supabase.from("profiles").update({ ativo }).eq("id", userId);
+  if (error) throw new Error(error.message);
+}
+
+export async function setUsuarioRole(userId: string, role: AppRole) {
+  await supabase.from("user_roles").delete().eq("user_id", userId);
+  const { error } = await supabase.from("user_roles").insert({ user_id: userId, role });
+  if (error) throw new Error(error.message);
+}
+

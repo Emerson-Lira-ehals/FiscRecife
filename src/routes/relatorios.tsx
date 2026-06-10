@@ -40,10 +40,12 @@ export const Route = createFileRoute("/relatorios")({
 
 const STATUS_COLOR: Record<ObraStatus, string> = {
   planejamento: "var(--muted-foreground)",
+  licitacao: "var(--chart-4)",
   em_andamento: "var(--chart-1)",
   atrasada: "var(--chart-3)",
   paralisada: "var(--chart-5)",
   concluida: "var(--chart-2)",
+  cancelada: "var(--border)",
 };
 
 const ALL = "todos";

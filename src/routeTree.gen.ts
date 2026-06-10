@@ -15,6 +15,7 @@ import { Route as ChecklistRouteImport } from './routes/checklist'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ObrasIdRouteImport } from './routes/obras.$id'
+import { Route as AdminUsuariosRouteImport } from './routes/admin.usuarios'
 
 const RelatoriosRoute = RelatoriosRouteImport.update({
   id: '/relatorios',
@@ -46,6 +47,11 @@ const ObrasIdRoute = ObrasIdRouteImport.update({
   path: '/obras/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
+  id: '/admin/usuarios',
+  path: '/admin/usuarios',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/checklist': typeof ChecklistRoute
   '/dashboard': typeof DashboardRoute
   '/relatorios': typeof RelatoriosRoute
+  '/admin/usuarios': typeof AdminUsuariosRoute
   '/obras/$id': typeof ObrasIdRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/checklist': typeof ChecklistRoute
   '/dashboard': typeof DashboardRoute
   '/relatorios': typeof RelatoriosRoute
+  '/admin/usuarios': typeof AdminUsuariosRoute
   '/obras/$id': typeof ObrasIdRoute
 }
 export interface FileRoutesById {
@@ -70,6 +78,7 @@ export interface FileRoutesById {
   '/checklist': typeof ChecklistRoute
   '/dashboard': typeof DashboardRoute
   '/relatorios': typeof RelatoriosRoute
+  '/admin/usuarios': typeof AdminUsuariosRoute
   '/obras/$id': typeof ObrasIdRoute
 }
 export interface FileRouteTypes {
@@ -80,9 +89,17 @@ export interface FileRouteTypes {
     | '/checklist'
     | '/dashboard'
     | '/relatorios'
+    | '/admin/usuarios'
     | '/obras/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/checklist' | '/dashboard' | '/relatorios' | '/obras/$id'
+  to:
+    | '/'
+    | '/auth'
+    | '/checklist'
+    | '/dashboard'
+    | '/relatorios'
+    | '/admin/usuarios'
+    | '/obras/$id'
   id:
     | '__root__'
     | '/'
@@ -90,6 +107,7 @@ export interface FileRouteTypes {
     | '/checklist'
     | '/dashboard'
     | '/relatorios'
+    | '/admin/usuarios'
     | '/obras/$id'
   fileRoutesById: FileRoutesById
 }
@@ -99,6 +117,7 @@ export interface RootRouteChildren {
   ChecklistRoute: typeof ChecklistRoute
   DashboardRoute: typeof DashboardRoute
   RelatoriosRoute: typeof RelatoriosRoute
+  AdminUsuariosRoute: typeof AdminUsuariosRoute
   ObrasIdRoute: typeof ObrasIdRoute
 }
 
@@ -146,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ObrasIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/usuarios': {
+      id: '/admin/usuarios'
+      path: '/admin/usuarios'
+      fullPath: '/admin/usuarios'
+      preLoaderRoute: typeof AdminUsuariosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -155,6 +181,7 @@ const rootRouteChildren: RootRouteChildren = {
   ChecklistRoute: ChecklistRoute,
   DashboardRoute: DashboardRoute,
   RelatoriosRoute: RelatoriosRoute,
+  AdminUsuariosRoute: AdminUsuariosRoute,
   ObrasIdRoute: ObrasIdRoute,
 }
 export const routeTree = rootRouteImport

@@ -15,6 +15,7 @@ interface Profile {
   id: string;
   nome: string;
   email: string;
+  ativo: boolean;
 }
 
 interface AuthContextValue {
@@ -24,6 +25,9 @@ interface AuthContextValue {
   role: AppRole | null;
   loading: boolean;
   isAuthenticated: boolean;
+  isAdmin: boolean;
+  /** True for admins (full access) or when the user holds the given role. */
+  can: (role: AppRole) => boolean;
   signIn: (
     email: string,
     password: string,
@@ -37,7 +41,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 async function loadRoleAndProfile(userId: string) {
   const [{ data: roles }, { data: profile }] = await Promise.all([
     supabase.from("user_roles").select("role").eq("user_id", userId),
-    supabase.from("profiles").select("id, nome, email").eq("id", userId).maybeSingle(),
+    supabase.from("profiles").select("id, nome, email, ativo").eq("id", userId).maybeSingle(),
   ]);
   const role = (roles && roles.length > 0 ? roles[0].role : null) as AppRole | null;
   return { role, profile: (profile as Profile | null) ?? null };
@@ -91,7 +95,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error || !data.user) {
         return { error: "Senha ou usuário inválido(s), por favor tente novamente." };
       }
-      const { role } = await loadRoleAndProfile(data.user.id);
+      const { role, profile } = await loadRoleAndProfile(data.user.id);
+      if (profile && profile.ativo === false) {
+        await supabase.auth.signOut();
+        return { error: "Usuário desativado. Procure o administrador." };
+      }
       if (role !== expectedRole) {
         await supabase.auth.signOut();
         return { error: "Senha ou usuário inválido(s), por favor tente novamente." };
@@ -107,6 +115,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
   }, []);
 
+  const isAdmin = role === "admin";
+  const can = useCallback(
+    (r: AppRole) => role === "admin" || role === r,
+    [role],
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -115,10 +129,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role,
       loading,
       isAuthenticated: !!user && !!role,
+      isAdmin,
+      can,
       signIn,
       signOut,
     }),
-    [user, session, profile, role, loading, signIn, signOut],
+    [user, session, profile, role, loading, isAdmin, can, signIn, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
