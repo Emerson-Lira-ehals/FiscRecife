@@ -338,15 +338,25 @@ export type Database = {
       obras: {
         Row: {
           bairro: string
+          cep: string
           created_at: string
           data_atualizada: string | null
           data_inicio: string | null
+          data_inicio_prevista: string | null
+          data_inicio_real: string | null
           data_prevista: string | null
+          data_termino_estimada: string | null
+          data_termino_prevista: string | null
+          data_termino_real: string | null
           descricao: string
           empreiteira: string
           endereco: string
+          fiscal_id: string | null
           foto_principal: string | null
+          gestor_id: string | null
           id: string
+          latitude: number | null
+          longitude: number | null
           nome: string
           orgao_responsavel: string
           percentual_concluido: number
@@ -358,15 +368,25 @@ export type Database = {
         }
         Insert: {
           bairro?: string
+          cep?: string
           created_at?: string
           data_atualizada?: string | null
           data_inicio?: string | null
+          data_inicio_prevista?: string | null
+          data_inicio_real?: string | null
           data_prevista?: string | null
+          data_termino_estimada?: string | null
+          data_termino_prevista?: string | null
+          data_termino_real?: string | null
           descricao?: string
           empreiteira?: string
           endereco?: string
+          fiscal_id?: string | null
           foto_principal?: string | null
+          gestor_id?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           nome: string
           orgao_responsavel?: string
           percentual_concluido?: number
@@ -378,15 +398,25 @@ export type Database = {
         }
         Update: {
           bairro?: string
+          cep?: string
           created_at?: string
           data_atualizada?: string | null
           data_inicio?: string | null
+          data_inicio_prevista?: string | null
+          data_inicio_real?: string | null
           data_prevista?: string | null
+          data_termino_estimada?: string | null
+          data_termino_prevista?: string | null
+          data_termino_real?: string | null
           descricao?: string
           empreiteira?: string
           endereco?: string
+          fiscal_id?: string | null
           foto_principal?: string | null
+          gestor_id?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           nome?: string
           orgao_responsavel?: string
           percentual_concluido?: number
@@ -400,18 +430,21 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ativo: boolean
           criado_em: string
           email: string
           id: string
           nome: string
         }
         Insert: {
+          ativo?: boolean
           criado_em?: string
           email?: string
           id: string
           nome?: string
         }
         Update: {
+          ativo?: boolean
           criado_em?: string
           email?: string
           id?: string
@@ -451,13 +484,15 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "fiscal" | "gestor" | "agente"
+      app_role: "fiscal" | "gestor" | "agente" | "admin" | "prefeitura"
       obra_status:
         | "planejamento"
         | "em_andamento"
         | "atrasada"
         | "paralisada"
         | "concluida"
+        | "licitacao"
+        | "cancelada"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -585,13 +620,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["fiscal", "gestor", "agente"],
+      app_role: ["fiscal", "gestor", "agente", "admin", "prefeitura"],
       obra_status: [
         "planejamento",
         "em_andamento",
         "atrasada",
         "paralisada",
         "concluida",
+        "licitacao",
+        "cancelada",
       ],
     },
   },
