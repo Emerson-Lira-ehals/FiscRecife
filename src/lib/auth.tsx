@@ -95,7 +95,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error || !data.user) {
         return { error: "Senha ou usuário inválido(s), por favor tente novamente." };
       }
-      const { role } = await loadRoleAndProfile(data.user.id);
+      const { role, profile } = await loadRoleAndProfile(data.user.id);
+      if (profile && profile.ativo === false) {
+        await supabase.auth.signOut();
+        return { error: "Usuário desativado. Procure o administrador." };
+      }
       if (role !== expectedRole) {
         await supabase.auth.signOut();
         return { error: "Senha ou usuário inválido(s), por favor tente novamente." };
