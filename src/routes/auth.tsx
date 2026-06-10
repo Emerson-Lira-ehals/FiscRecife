@@ -145,22 +145,25 @@ function AuthPage() {
         </form>
 
         <div className="mt-6 rounded-lg border border-dashed border-border bg-muted/50 p-3 text-xs text-muted-foreground">
-          <p className="mb-1 font-semibold text-foreground">Contas de demonstração (senha: recife2026)</p>
-          {ROLES.map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => {
-                setRole(r);
-                setEmail(DEMO[r]);
-                setPassword("recife2026");
-                setError(null);
-              }}
-              className="block w-full text-left hover:text-primary"
-            >
-              {ROLE_LABELS[r]}: {DEMO[r]}
-            </button>
-          ))}
+          <p className="mb-1 font-semibold text-foreground">Contas de demonstração</p>
+          {ROLES.filter((r) => DEMO[r]).map((r) => {
+            const senha = r === "admin" ? "Devsembug@2026" : "recife2026";
+            return (
+              <button
+                key={r}
+                type="button"
+                onClick={() => {
+                  setRole(r);
+                  setEmail(DEMO[r] ?? "");
+                  setPassword(senha);
+                  setError(null);
+                }}
+                className="block w-full text-left hover:text-primary"
+              >
+                {ROLE_LABELS[r]}: {DEMO[r]} ({senha})
+              </button>
+            );
+          })}
         </div>
 
         <p className="mt-4 text-center text-xs text-muted-foreground">
