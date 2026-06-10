@@ -18,9 +18,10 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-const ROLES: AppRole[] = ["fiscal", "gestor", "agente"];
+const ROLES: AppRole[] = ["admin", "prefeitura", "fiscal", "gestor"];
 
-const DEMO: Record<AppRole, string> = {
+const DEMO: Partial<Record<AppRole, string>> = {
+  admin: "admin@recifeobraviva.com",
   fiscal: "fiscal@recife.gov.br",
   gestor: "gestor@recife.gov.br",
   agente: "agente@recife.gov.br",
