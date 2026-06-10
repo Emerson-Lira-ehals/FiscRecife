@@ -24,8 +24,10 @@ const items: NavItem[] = [
 
 export function AppSidebar() {
   const { sidebarOpen, setSidebarOpen } = useUI();
-  const { isAuthenticated, role } = useAuth();
+  const { isAuthenticated, isAdmin, role } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  const visibleItems = items.filter((item) => !item.requiresAdmin || isAdmin);
 
   return (
     <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
@@ -47,7 +49,7 @@ export function AppSidebar() {
         </SheetHeader>
 
         <nav className="flex flex-col gap-1 p-3">
-          {items.map((item) => {
+          {visibleItems.map((item) => {
             const enabled = !item.requiresAuth || isAuthenticated;
             const active = pathname === item.to;
             const Icon = item.icon;
