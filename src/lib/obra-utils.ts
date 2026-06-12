@@ -97,3 +97,68 @@ export function daysBetween(a: string | null, b: string | null): number {
   const db = new Date(b).getTime();
   return Math.round((db - da) / (1000 * 60 * 60 * 24));
 }
+
+export type AtividadeStatus = Database["public"]["Enums"]["atividade_status"];
+
+export const ATIVIDADE_STATUS_LABELS: Record<AtividadeStatus, string> = {
+  nao_iniciada: "Não iniciada",
+  em_execucao: "Em execução",
+  aguardando_validacao: "Aguardando validação",
+  concluida: "Concluída",
+  rejeitada: "Rejeitada",
+};
+
+export const ATIVIDADE_STATUS_CLASSES: Record<AtividadeStatus, string> = {
+  nao_iniciada: "bg-muted text-muted-foreground border border-border",
+  em_execucao: "bg-primary/10 text-primary border border-primary/20",
+  aguardando_validacao: "bg-warning/15 text-warning border border-warning/30",
+  concluida: "bg-success/15 text-success border border-success/30",
+  rejeitada: "bg-danger/10 text-danger border border-danger/30",
+};
+
+export const ATIVIDADE_STATUS_DOT: Record<AtividadeStatus, string> = {
+  nao_iniciada: "bg-muted-foreground",
+  em_execucao: "bg-primary",
+  aguardando_validacao: "bg-warning",
+  concluida: "bg-success",
+  rejeitada: "bg-danger",
+};
+
+export interface SlaInfo {
+  /** Dias de atraso (positivo) ou adiantamento (negativo) na conclusão real vs planejada. */
+  dias: number;
+  cumprido: boolean | null;
+  label: string;
+  tone: "success" | "warning" | "danger" | "muted";
+}
+
+/** Calcula a situação de SLA de uma atividade comparando datas reais e planejadas. */
+export function atividadeSla(a: {
+  status: AtividadeStatus;
+  data_planejada_fim: string | null;
+  data_real_fim: string | null;
+}): SlaInfo {
+  const hoje = new Date().toISOString().slice(0, 10);
+  if (!a.data_planejada_fim) {
+    return { dias: 0, cumprido: null, label: "Sem prazo definido", tone: "muted" };
+  }
+  // Concluída: compara conclusão real x planejada
+  if (a.status === "concluida" && a.data_real_fim) {
+    const dias = daysBetween(a.data_planejada_fim, a.data_real_fim);
+    if (dias <= 0)
+      return {
+        dias,
+        cumprido: true,
+        label: dias === 0 ? "SLA cumprido (no prazo)" : `SLA cumprido (${Math.abs(dias)}d adiantado)`,
+        tone: "success",
+      };
+    return { dias, cumprido: false, label: `SLA descumprido (${dias}d de atraso)`, tone: "danger" };
+  }
+  // Pendente: compara prazo planejado x hoje
+  const dias = daysBetween(a.data_planejada_fim, hoje);
+  if (dias > 0)
+    return { dias, cumprido: false, label: `${dias}d de atraso`, tone: "danger" };
+  if (dias > -7)
+    return { dias, cumprido: null, label: `Vence em ${Math.abs(dias)}d`, tone: "warning" };
+  return { dias, cumprido: null, label: `No prazo (${Math.abs(dias)}d)`, tone: "muted" };
+}

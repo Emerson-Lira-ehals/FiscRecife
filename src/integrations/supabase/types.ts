@@ -160,6 +160,101 @@ export type Database = {
           },
         ]
       }
+      obra_atividades: {
+        Row: {
+          created_at: string
+          data_planejada_fim: string | null
+          data_planejada_inicio: string | null
+          data_real_fim: string | null
+          data_real_inicio: string | null
+          duracao_dias: number | null
+          enviado_em: string | null
+          enviado_por: string | null
+          evidencia_comentario: string | null
+          evidencia_doc: string | null
+          evidencia_foto: string | null
+          evidencia_gps: string | null
+          id: string
+          justificativa: string | null
+          macroetapa: string
+          nome: string
+          obra_id: string
+          ordem: number
+          percentual_planejado: number
+          peso: number
+          responsavel_id: string | null
+          status: Database["public"]["Enums"]["atividade_status"]
+          updated_at: string
+          validado_em: string | null
+          validado_por: string | null
+          valor: number | null
+        }
+        Insert: {
+          created_at?: string
+          data_planejada_fim?: string | null
+          data_planejada_inicio?: string | null
+          data_real_fim?: string | null
+          data_real_inicio?: string | null
+          duracao_dias?: number | null
+          enviado_em?: string | null
+          enviado_por?: string | null
+          evidencia_comentario?: string | null
+          evidencia_doc?: string | null
+          evidencia_foto?: string | null
+          evidencia_gps?: string | null
+          id?: string
+          justificativa?: string | null
+          macroetapa?: string
+          nome: string
+          obra_id: string
+          ordem?: number
+          percentual_planejado?: number
+          peso?: number
+          responsavel_id?: string | null
+          status?: Database["public"]["Enums"]["atividade_status"]
+          updated_at?: string
+          validado_em?: string | null
+          validado_por?: string | null
+          valor?: number | null
+        }
+        Update: {
+          created_at?: string
+          data_planejada_fim?: string | null
+          data_planejada_inicio?: string | null
+          data_real_fim?: string | null
+          data_real_inicio?: string | null
+          duracao_dias?: number | null
+          enviado_em?: string | null
+          enviado_por?: string | null
+          evidencia_comentario?: string | null
+          evidencia_doc?: string | null
+          evidencia_foto?: string | null
+          evidencia_gps?: string | null
+          id?: string
+          justificativa?: string | null
+          macroetapa?: string
+          nome?: string
+          obra_id?: string
+          ordem?: number
+          percentual_planejado?: number
+          peso?: number
+          responsavel_id?: string | null
+          status?: Database["public"]["Enums"]["atividade_status"]
+          updated_at?: string
+          validado_em?: string | null
+          validado_por?: string | null
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_atividades_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obra_etapas: {
         Row: {
           concluida: boolean
@@ -490,9 +585,16 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      recalc_avanco_obra: { Args: { _obra_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "fiscal" | "gestor" | "agente" | "admin" | "prefeitura"
+      atividade_status:
+        | "nao_iniciada"
+        | "em_execucao"
+        | "aguardando_validacao"
+        | "concluida"
+        | "rejeitada"
       obra_status:
         | "planejamento"
         | "em_andamento"
@@ -629,6 +731,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["fiscal", "gestor", "agente", "admin", "prefeitura"],
+      atividade_status: [
+        "nao_iniciada",
+        "em_execucao",
+        "aguardando_validacao",
+        "concluida",
+        "rejeitada",
+      ],
       obra_status: [
         "planejamento",
         "em_andamento",
