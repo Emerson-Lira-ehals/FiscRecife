@@ -11,6 +11,8 @@ export type ObraOrcamento = Database["public"]["Tables"]["obra_orcamento"]["Row"
 export type ObraEtapa = Database["public"]["Tables"]["obra_etapas"]["Row"];
 export type Auditoria = Database["public"]["Tables"]["auditoria"]["Row"];
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type ObraAtividade = Database["public"]["Tables"]["obra_atividades"]["Row"];
+export type AtividadeStatus = Database["public"]["Enums"]["atividade_status"];
 
 function check<T>(data: T | null, error: { message: string } | null): T {
   if (error) throw new Error(error.message);
