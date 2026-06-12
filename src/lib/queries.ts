@@ -181,3 +181,104 @@ export async function setUsuarioRole(userId: string, role: AppRole) {
   if (error) throw new Error(error.message);
 }
 
+// ---- Cronograma de atividades / avanço físico automático ----
+
+export async function fetchAtividades(obraId: string): Promise<ObraAtividade[]> {
+  const { data, error } = await supabase
+    .from("obra_atividades")
+    .select("*")
+    .eq("obra_id", obraId)
+    .order("ordem");
+  return check<ObraAtividade[]>(data, error);
+}
+
+/** Faz upload de uma evidência para o bucket privado e devolve o caminho armazenado. */
+export async function uploadEvidencia(obraId: string, file: File): Promise<string> {
+  const ext = file.name.split(".").pop() || "bin";
+  const path = `${obraId}/${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from("fiscalizacao").upload(path, file, {
+    upsert: false,
+  });
+  if (error) throw new Error(error.message);
+  return path;
+}
+
+/** Gera uma URL assinada temporária para visualizar uma evidência privada. */
+export async function signedEvidenciaUrl(path: string): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from("fiscalizacao")
+    .createSignedUrl(path, 3600);
+  if (error) return null;
+  return data?.signedUrl ?? null;
+}
+
+export interface EnviarAtividadeInput {
+  atividadeId: string;
+  obraId: string;
+  comentario: string;
+  fotoPath: string;
+  docPath?: string | null;
+  gps?: string | null;
+  usuarioId: string;
+  usuarioNome: string;
+}
+
+/** Gestor envia a atividade para validação (evidência: foto + comentário obrigatórios). */
+export async function enviarAtividadeParaValidacao(input: EnviarAtividadeInput) {
+  const { error } = await supabase
+    .from("obra_atividades")
+    .update({
+      status: "aguardando_validacao",
+      evidencia_comentario: input.comentario.trim(),
+      evidencia_foto: input.fotoPath,
+      evidencia_doc: input.docPath ?? null,
+      evidencia_gps: input.gps ?? null,
+      enviado_por: input.usuarioId,
+      enviado_em: new Date().toISOString(),
+      data_real_inicio: new Date().toISOString().slice(0, 10),
+      justificativa: null,
+    })
+    .eq("id", input.atividadeId);
+  if (error) throw new Error(error.message);
+  await logAuditoria(
+    input.obraId,
+    "Enviou atividade para validação",
+    "obra_atividades",
+    input.usuarioId,
+    input.usuarioNome,
+  );
+}
+
+export interface ValidarAtividadeInput {
+  atividadeId: string;
+  obraId: string;
+  aprovar: boolean;
+  justificativa?: string;
+  usuarioId: string;
+  usuarioNome: string;
+}
+
+/** Fiscal aprova ou reprova a atividade. Reprovação exige justificativa. */
+export async function validarAtividade(input: ValidarAtividadeInput) {
+  const aprovado = input.aprovar;
+  const { error } = await supabase
+    .from("obra_atividades")
+    .update({
+      status: aprovado ? "concluida" : "rejeitada",
+      validado_por: input.usuarioId,
+      validado_em: new Date().toISOString(),
+      justificativa: aprovado ? null : (input.justificativa ?? "").trim(),
+      data_real_fim: aprovado ? new Date().toISOString().slice(0, 10) : null,
+    })
+    .eq("id", input.atividadeId);
+  if (error) throw new Error(error.message);
+  await logAuditoria(
+    input.obraId,
+    aprovado ? "Aprovou atividade" : "Reprovou atividade",
+    "obra_atividades",
+    input.usuarioId,
+    input.usuarioNome,
+  );
+}
+
+
