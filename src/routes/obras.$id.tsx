@@ -36,6 +36,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ObraCronograma } from "@/components/ObraCronograma";
 
 export const Route = createFileRoute("/obras/$id")({
   component: ObraDetail,
