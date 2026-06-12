@@ -221,9 +221,13 @@ function ObraDetail() {
               />
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              Planejado para o período: {obra.percentual_planejado}%
+              Planejado para o período: {obra.percentual_planejado}% · valor calculado
+              automaticamente pelas atividades aprovadas.
             </p>
           </section>
+
+          {/* Cronograma de atividades com avanço automático */}
+          <ObraCronograma obraId={id} />
 
           {/* Financeiro */}
           <section className="rounded-xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
