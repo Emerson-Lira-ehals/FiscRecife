@@ -226,6 +226,13 @@ function ObraDetail() {
             </p>
           </section>
 
+          {/* Importação de planejamento (gestão) */}
+          {(role === "gestor" || role === "admin" || role === "prefeitura") && obra && (
+            <div className="flex justify-end">
+              <ImportarCronograma obras={[{ id: obra.id, nome: obra.nome }]} obraId={obra.id} />
+            </div>
+          )}
+
           {/* Cronograma de atividades com avanço automático */}
           <ObraCronograma obraId={id} />
 
