@@ -281,4 +281,55 @@ export async function validarAtividade(input: ValidarAtividadeInput) {
   );
 }
 
+// ---- Importação de cronograma (.xlsx / XML MS Project) ----
+
+import type { NovaAtividade } from "@/lib/cronograma-import";
+
+export interface ImportarCronogramaInput {
+  obraId: string;
+  atividades: NovaAtividade[];
+  substituir: boolean;
+  usuarioId: string;
+  usuarioNome: string;
+}
+
+/**
+ * Persiste o checklist gerado a partir do planejamento importado.
+ * Se `substituir` for verdadeiro, remove o cronograma atual da obra antes de inserir.
+ */
+export async function importarCronograma(input: ImportarCronogramaInput) {
+  if (input.atividades.length === 0) throw new Error("Nenhuma atividade para importar.");
+
+  if (input.substituir) {
+    const { error: delErr } = await supabase
+      .from("obra_atividades")
+      .delete()
+      .eq("obra_id", input.obraId);
+    if (delErr) throw new Error(delErr.message);
+  }
+
+  const rows = input.atividades.map((a) => ({
+    obra_id: input.obraId,
+    macroetapa: a.macroetapa,
+    nome: a.nome,
+    ordem: a.ordem,
+    peso: a.peso,
+    duracao_dias: a.duracao_dias,
+    data_planejada_inicio: a.data_planejada_inicio,
+    data_planejada_fim: a.data_planejada_fim,
+    status: a.status,
+  }));
+
+  const { error } = await supabase.from("obra_atividades").insert(rows);
+  if (error) throw new Error(error.message);
+
+  await logAuditoria(
+    input.obraId,
+    `Importou cronograma (${rows.length} micro etapas)`,
+    "obra_atividades",
+    input.usuarioId,
+    input.usuarioNome,
+  );
+}
+
 
