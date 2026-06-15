@@ -130,6 +130,24 @@ function Checklist() {
         </p>
       </div>
 
+      {(role === "gestor" || role === "admin" || role === "prefeitura") && (
+        <section className="mb-8 rounded-xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
+                <Upload className="h-5 w-5 text-primary" /> Importar planejamento
+              </h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Gere o checklist da obra a partir de um cronograma (.xlsx ou XML do MS Project).
+              </p>
+            </div>
+            <ImportarCronograma obras={obras.map((o) => ({ id: o.id, nome: o.nome }))} />
+          </div>
+        </section>
+      )}
+
+
+
       {canCreate ? (
         <section className="mb-8 rounded-xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
           <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-foreground">
