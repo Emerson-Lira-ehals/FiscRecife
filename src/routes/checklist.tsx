@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
 import { AuthRequired } from "@/components/AuthRequired";
+import { ImportarCronograma } from "@/components/ImportarCronograma";
 import { formatDate, ROLE_LABELS } from "@/lib/obra-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
