@@ -37,6 +37,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ObraCronograma } from "@/components/ObraCronograma";
+import { ImportarCronograma } from "@/components/ImportarCronograma";
 
 export const Route = createFileRoute("/obras/$id")({
   component: ObraDetail,
@@ -225,6 +226,13 @@ function ObraDetail() {
               automaticamente pelas atividades aprovadas.
             </p>
           </section>
+
+          {/* Importação de planejamento (gestão) */}
+          {(role === "gestor" || role === "admin" || role === "prefeitura") && obra && (
+            <div className="flex justify-end">
+              <ImportarCronograma obras={[{ id: obra.id, nome: obra.nome }]} obraId={obra.id} />
+            </div>
+          )}
 
           {/* Cronograma de atividades com avanço automático */}
           <ObraCronograma obraId={id} />

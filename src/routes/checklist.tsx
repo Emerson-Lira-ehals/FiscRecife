@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth";
 import { AuthRequired } from "@/components/AuthRequired";
+import { ImportarCronograma } from "@/components/ImportarCronograma";
 import { formatDate, ROLE_LABELS } from "@/lib/obra-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -129,6 +130,24 @@ function Checklist() {
           Registro e acompanhamento das inspeções de fiscalização.
         </p>
       </div>
+
+      {(role === "gestor" || role === "admin" || role === "prefeitura") && (
+        <section className="mb-8 rounded-xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
+                <Upload className="h-5 w-5 text-primary" /> Importar planejamento
+              </h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Gere o checklist da obra a partir de um cronograma (.xlsx ou XML do MS Project).
+              </p>
+            </div>
+            <ImportarCronograma obras={obras.map((o) => ({ id: o.id, nome: o.nome }))} />
+          </div>
+        </section>
+      )}
+
+
 
       {canCreate ? (
         <section className="mb-8 rounded-xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
