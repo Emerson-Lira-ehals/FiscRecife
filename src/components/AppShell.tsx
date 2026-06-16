@@ -9,7 +9,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <AppSidebar />
       <main className="flex-1">{children}</main>
       <footer className="border-t border-border bg-card py-6 text-center text-xs text-muted-foreground">
-        Recife Obras · Plataforma de transparência e monitoramento de obras públicas
+        FiscRecife · Plataforma de transparência e monitoramento de obras públicas
       </footer>
     </div>
   );

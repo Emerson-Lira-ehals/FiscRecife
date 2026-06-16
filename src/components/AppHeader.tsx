@@ -4,14 +4,14 @@ import { useAuth } from "@/lib/auth";
 import { useUI } from "@/lib/ui-context";
 import { ROLE_LABELS } from "@/lib/obra-utils";
 import { Button } from "@/components/ui/button";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo-fiscrecife.svg";
 
 export function AppHeader() {
   const { setSidebarOpen, search, setSearch } = useUI();
   const { isAuthenticated, role, signOut } = useAuth();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-card/90 backdrop-blur">
+    <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-xl">
       <div className="flex h-16 items-center gap-3 px-3 sm:px-5">
         <Button
           variant="ghost"
@@ -23,10 +23,21 @@ export function AppHeader() {
           <Menu className="h-5 w-5" />
         </Button>
 
-        <Link to="/" className="flex items-center gap-2 shrink-0">
-          <img src={logo} alt="Recife Obras" className="h-9 w-9 object-contain" width={36} height={36} />
-          <span className="hidden text-lg font-bold tracking-tight text-foreground sm:inline">
-            Recife<span className="text-primary">Obras</span>
+        <Link to="/" className="flex items-center gap-2.5 shrink-0">
+          <img
+            src={logo}
+            alt="FiscRecife"
+            className="h-9 w-9 rounded-xl object-contain shadow-[var(--shadow-soft)]"
+            width={36}
+            height={36}
+          />
+          <span className="hidden flex-col leading-none sm:flex">
+            <span className="text-lg font-bold tracking-tight text-foreground">
+              Fisc<span className="text-primary-deep">Recife</span>
+            </span>
+            <span className="text-[10px] font-semibold tracking-widest text-muted-foreground">
+              FISCALIZAÇÃO DE OBRAS
+            </span>
           </span>
         </Link>
 

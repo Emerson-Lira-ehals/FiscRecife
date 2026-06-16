@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/relatorios")({
-  head: () => ({ meta: [{ title: "Relatórios — Recife Obras" }] }),
+  head: () => ({ meta: [{ title: "Relatórios — FiscRecife" }] }),
   component: () => (
     <AuthRequired>
       <Relatorios />
