@@ -11,8 +11,8 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Entrar — Recife Obras" },
-      { name: "description", content: "Acesse a plataforma Recife Obras com seu perfil institucional." },
+      { title: "Entrar — FiscRecife" },
+      { name: "description", content: "Acesse a plataforma FiscRecife com seu perfil institucional." },
     ],
   }),
   component: AuthPage,

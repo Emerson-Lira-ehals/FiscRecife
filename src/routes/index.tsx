@@ -11,13 +11,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Recife Obras — Transparência das Obras Públicas" },
+      { title: "FiscRecife — Transparência das Obras Públicas" },
       {
         name: "description",
         content:
           "Acompanhe, monitore e fiscalize as obras públicas da cidade do Recife com transparência total: andamento, finanças e cronograma em tempo real.",
       },
-      { property: "og:title", content: "Recife Obras — Transparência das Obras Públicas" },
+      { property: "og:title", content: "FiscRecife — Transparência das Obras Públicas" },
       {
         property: "og:description",
         content: "Monitoramento e transparência das obras públicas da cidade do Recife.",
