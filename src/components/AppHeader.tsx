@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { useUI } from "@/lib/ui-context";
 import { ROLE_LABELS } from "@/lib/obra-utils";
 import { Button } from "@/components/ui/button";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo-fiscrecife.svg";
 
 export function AppHeader() {
   const { setSidebarOpen, search, setSearch } = useUI();
