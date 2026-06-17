@@ -355,6 +355,38 @@ function MenuItem({ children, onClick }: { children: React.ReactNode; onClick: (
   );
 }
 
+function StatChip({
+  label,
+  hint,
+  value,
+  sub,
+  tone,
+}: {
+  label: string;
+  hint: string;
+  value: string;
+  sub: string;
+  tone: "success" | "warning" | "muted";
+}) {
+  const toneCls =
+    tone === "success"
+      ? "text-success"
+      : tone === "warning"
+        ? "text-warning"
+        : "text-muted-foreground";
+  return (
+    <div className="rounded-xl border border-border bg-card px-4 py-2.5 shadow-[var(--shadow-soft)]">
+      <div className="flex items-baseline gap-2">
+        <span className={cn("text-2xl font-bold tabular-nums", toneCls)}>{value}</span>
+        <span className="text-xs font-semibold text-foreground">{label}</span>
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        {sub} · {hint}
+      </p>
+    </div>
+  );
+}
+
 function MacroCard({
   macro,
   prog,
@@ -365,7 +397,7 @@ function MacroCard({
   onToggleStatus,
 }: {
   macro: Task;
-  prog: { pct: number; done: number; total: number };
+  prog: Progress;
   open: boolean;
   onToggle: () => void;
   children: Task[];
@@ -381,19 +413,30 @@ function MacroCard({
         <div className="min-w-0 flex-1">
           <p className="truncate text-base font-semibold tracking-tight text-foreground">{macro.name}</p>
           <p className="text-xs text-muted-foreground">
-            {prog.done} de {prog.total} micro etapas concluídas
+            {prog.validado} validada(s) · {prog.responsavel} aguardando · {prog.total} micro etapas
           </p>
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
+          {/* Barra: verde (válido) preenchido, amarelo (previsto) como projeção */}
+          <div className="relative mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
             <motion.div
-              className="h-full rounded-full"
-              style={{ background: "var(--gradient-sky)" }}
+              className="absolute inset-y-0 left-0 rounded-full bg-warning/60"
               initial={false}
-              animate={{ width: `${prog.pct}%` }}
+              animate={{ width: `${prog.previstoPct}%` }}
+              transition={{ type: "spring", stiffness: 120, damping: 20 }}
+            />
+            <motion.div
+              className="absolute inset-y-0 left-0 rounded-full bg-success"
+              initial={false}
+              animate={{ width: `${prog.validadoPct}%` }}
               transition={{ type: "spring", stiffness: 120, damping: 20 }}
             />
           </div>
         </div>
-        <span className="text-xl font-bold text-primary">{prog.pct}%</span>
+        <div className="shrink-0 text-right">
+          <span className="block text-xl font-bold text-success tabular-nums">{prog.validadoPct}%</span>
+          <span className="block text-xs font-semibold text-warning tabular-nums">
+            {prog.previstoPct}% prev.
+          </span>
+        </div>
         <ChevronDown
           className={cn("h-5 w-5 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")}
         />
@@ -429,14 +472,21 @@ function StatusBox({ status, onClick }: { status: TaskStatus; onClick: () => voi
     <button
       onClick={onClick}
       aria-label="Alterar status"
+      title={
+        status === "validated"
+          ? "Validado pelo fiscal"
+          : status === "responsavel"
+            ? "Marcado pelo responsável (aguardando validação)"
+            : "Pendente"
+      }
       className={cn(
         "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border-2 transition",
         status === "pending" && "border-border bg-background hover:border-primary/50",
-        status === "fiscal" && "border-success bg-success text-success-foreground",
-        status === "validated" && "border-warning bg-warning text-warning-foreground",
+        status === "responsavel" && "border-warning bg-warning text-warning-foreground",
+        status === "validated" && "border-success bg-success text-success-foreground",
       )}
     >
-      {status === "fiscal" && <Check className="h-4 w-4" strokeWidth={3} />}
+      {status === "responsavel" && <Check className="h-4 w-4" strokeWidth={3} />}
       {status === "validated" && <ShieldCheck className="h-4 w-4" strokeWidth={2.5} />}
     </button>
   );
