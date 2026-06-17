@@ -211,4 +211,3 @@ export function nextStatus(current: TaskStatus, profile: "fiscal" | "responsavel
   if (current === "validated") return "pending";
   return "validated"; // pending|responsavel -> validado
 }
-}
