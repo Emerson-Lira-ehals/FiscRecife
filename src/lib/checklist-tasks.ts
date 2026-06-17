@@ -174,16 +174,16 @@ const today = () => new Date().toISOString().slice(0, 10);
 /** Dados de exemplo para demonstração. */
 export const SAMPLE_TASKS: Task[] = buildHierarchy([
   { idt: "1", name: "Serviços Preliminares" },
-  { idt: "1.1", name: "Mobilização", status: "validated", responsible: "Construtora Alfa", notes: "Concluída e validada." },
-  { idt: "1.2", name: "Instalações provisórias", status: "fiscal", responsible: "Construtora Alfa" },
+  { idt: "1.1", name: "Mobilização", status: "validated", responsible: "Construtora Alfa", notes: "Validada pelo fiscal." },
+  { idt: "1.2", name: "Instalações provisórias", status: "responsavel", responsible: "Construtora Alfa", notes: "Aguardando validação." },
   { idt: "1.3", name: "Tapumes", status: "pending" },
   { idt: "2", name: "Fundação" },
   { idt: "2.1", name: "Escavação", status: "validated", responsible: "Equipe de Campo" },
-  { idt: "2.2", name: "Lastro", status: "fiscal", responsible: "Equipe de Campo" },
+  { idt: "2.2", name: "Lastro", status: "responsavel", responsible: "Equipe de Campo" },
   { idt: "2.3", name: "Sapatas", status: "pending" },
   { idt: "2.4", name: "Blocos", status: "pending" },
   { idt: "3", name: "Estrutura" },
-  { idt: "3.1", name: "Fôrmas", status: "fiscal" },
+  { idt: "3.1", name: "Fôrmas", status: "responsavel" },
   { idt: "3.2", name: "Armadura", status: "pending" },
   { idt: "3.3", name: "Pilares", status: "pending" },
   { idt: "3.4", name: "Lajes", status: "pending" },
@@ -191,20 +191,24 @@ export const SAMPLE_TASKS: Task[] = buildHierarchy([
   { idt: "4.1", name: "Marcação", status: "pending" },
   { idt: "4.2", name: "Paredes", status: "pending" },
 ]).map((t) =>
-  t.status === "fiscal" || t.status === "validated"
-    ? { ...t, updatedAt: today(), updatedBy: t.status === "fiscal" ? "Fiscal" : "Responsável" }
+  t.status === "responsavel" || t.status === "validated"
+    ? { ...t, updatedAt: today(), updatedBy: t.status === "validated" ? "Fiscal" : "Responsável" }
     : t,
 );
 
-/** Regra de toggle por perfil. */
+/**
+ * Regra de toggle por perfil.
+ * - Responsável marca/desmarca sua etapa (amarelo).
+ * - Fiscal valida/invalida (verde). Ao invalidar, retorna ao estado de responsável se já havia marcação.
+ */
 export function nextStatus(current: TaskStatus, profile: "fiscal" | "responsavel"): TaskStatus {
-  if (profile === "fiscal") {
-    if (current === "pending") return "fiscal";
-    if (current === "fiscal") return "pending";
-    return "fiscal"; // validated -> fiscal
+  if (profile === "responsavel") {
+    if (current === "pending") return "responsavel";
+    if (current === "responsavel") return "pending";
+    return "responsavel"; // validated -> volta para marcação do responsável
   }
-  // responsável
-  if (current === "pending") return "validated";
-  if (current === "fiscal") return "validated";
-  return "pending"; // validated -> pending
+  // fiscal
+  if (current === "validated") return "pending";
+  return "validated"; // pending|responsavel -> validado
+}
 }
