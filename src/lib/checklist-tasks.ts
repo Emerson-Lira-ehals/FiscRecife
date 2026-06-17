@@ -1,6 +1,28 @@
 import * as XLSX from "xlsx";
 
-export type TaskStatus = "pending" | "fiscal" | "validated";
+/**
+ * Fluxo de validação:
+ * - "pending"     : não iniciada
+ * - "responsavel" : marcada pelo Responsável da Obra (AMARELO) → entra no "Previsto"
+ * - "validated"   : validada pelo Fiscal (VERDE) → entra no "Válido" (e também no "Previsto")
+ */
+export type TaskStatus = "pending" | "responsavel" | "validated";
+
+export interface Progress {
+  total: number;
+  /** Folhas validadas pelo fiscal (verde). */
+  validado: number;
+  /** Folhas marcadas só pelo responsável (amarelo). */
+  responsavel: number;
+  /** Validado + responsável (amarelo + verde). */
+  previsto: number;
+  /** % oficial: somente validadas pelo fiscal. */
+  validadoPct: number;
+  /** % previsto: validadas + marcadas pelo responsável. */
+  previstoPct: number;
+  /** % marcada pelo responsável (sem validação). */
+  responsavelPct: number;
+}
 
 export interface Task {
   id: string;
