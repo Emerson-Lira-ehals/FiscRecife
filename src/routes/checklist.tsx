@@ -58,8 +58,16 @@ export const Route = createFileRoute("/checklist")({
 type Profile = "fiscal" | "responsavel";
 
 function Checklist() {
+  const { role, isAdmin } = useAuth();
+  // Perfil de marcação travado pelo login: fiscal valida (verde), gestor é o responsável (amarelo).
+  const lockedProfile: Profile | null =
+    role === "fiscal" ? "fiscal" : role === "gestor" ? "responsavel" : null;
+  // Admin (acesso total) pode alternar entre os dois perfis; demais ficam travados no seu.
+  const canSwitch = isAdmin;
+  const canEdit = isAdmin || lockedProfile !== null;
+
   const [tasks, setTasks] = useState<Task[]>(SAMPLE_TASKS);
-  const [profile, setProfile] = useState<Profile>("fiscal");
+  const [profile, setProfile] = useState<Profile>(lockedProfile ?? "fiscal");
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(SAMPLE_TASKS.filter((t) => t.level === 0).map((t) => [t.id, true])),
@@ -68,6 +76,11 @@ function Checklist() {
   const [newOpen, setNewOpen] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Sincroniza o perfil ativo com o login quando ele estiver travado.
+  useEffect(() => {
+    if (lockedProfile && !isAdmin) setProfile(lockedProfile);
+  }, [lockedProfile, isAdmin]);
 
   const macros = useMemo(() => tasks.filter((t) => t.level === 0), [tasks]);
   const global = useMemo(() => globalProgress(tasks), [tasks]);
@@ -80,6 +93,10 @@ function Checklist() {
     (t.responsible ?? "").toLowerCase().includes(q);
 
   function toggleStatus(task: Task) {
+    if (!canEdit) {
+      toast.error("Seu perfil não tem permissão para marcar etapas.");
+      return;
+    }
     const ns = nextStatus(task.status, profile);
     setTasks((prev) =>
       prev.map((t) =>
@@ -94,6 +111,7 @@ function Checklist() {
       ),
     );
   }
+
 
   function toggleExpand(id: string) {
     setExpanded((p) => ({ ...p, [id]: !p[id] }));
