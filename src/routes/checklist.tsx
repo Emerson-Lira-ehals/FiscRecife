@@ -171,28 +171,58 @@ function Checklist() {
       <div className="mb-6">
         <p className="text-xs font-medium text-muted-foreground">Obra · Hospital Recife Norte</p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">Checklist da Obra</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {global.done} de {global.total} atividades concluídas · {global.pct}% de avanço físico
-        </p>
+
+        {/* Indicadores: Válido (verde) x Previsto (amarelo) */}
+        <div className="mt-3 flex flex-wrap gap-3">
+          <StatChip
+            label="Avanço válido"
+            hint="Validado pelo fiscal"
+            value={`${global.validadoPct}%`}
+            sub={`${global.validado} de ${global.total}`}
+            tone="success"
+          />
+          <StatChip
+            label="Avanço previsto"
+            hint="Responsável + fiscal"
+            value={`${global.previstoPct}%`}
+            sub={`${global.previsto} de ${global.total}`}
+            tone="warning"
+          />
+          <StatChip
+            label="Aguardando validação"
+            hint="Marcado pelo responsável"
+            value={`${global.responsavelPct}%`}
+            sub={`${global.responsavel} etapa(s)`}
+            tone="muted"
+          />
+        </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          {/* Switch de perfil */}
-          <div className="inline-flex rounded-xl border border-border bg-card p-1 shadow-[var(--shadow-soft)]">
-            {(["fiscal", "responsavel"] as Profile[]).map((p) => (
-              <button
-                key={p}
-                onClick={() => setProfile(p)}
-                className={cn(
-                  "rounded-lg px-4 py-1.5 text-sm font-medium transition",
-                  profile === p
-                    ? "bg-primary text-primary-foreground shadow-[var(--shadow-soft)]"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {p === "fiscal" ? "Fiscal" : "Responsável"}
-              </button>
-            ))}
+          {/* Switch de perfil — travado conforme o login */}
+          <div className="inline-flex items-center rounded-xl border border-border bg-card p-1 shadow-[var(--shadow-soft)]">
+            {(["fiscal", "responsavel"] as Profile[]).map((p) => {
+              const allowed = canSwitch || profile === p;
+              return (
+                <button
+                  key={p}
+                  onClick={() => canSwitch && setProfile(p)}
+                  disabled={!allowed}
+                  title={!canSwitch && profile !== p ? "Perfil definido pelo seu login" : undefined}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition",
+                    profile === p
+                      ? "bg-primary text-primary-foreground shadow-[var(--shadow-soft)]"
+                      : "text-muted-foreground hover:text-foreground",
+                    !allowed && "cursor-not-allowed opacity-40 hover:text-muted-foreground",
+                  )}
+                >
+                  {p === "fiscal" ? "Fiscal" : "Responsável"}
+                  {!canSwitch && profile === p && <Lock className="h-3 w-3" />}
+                </button>
+              );
+            })}
           </div>
+
 
           <button
             onClick={() => fileRef.current?.click()}
