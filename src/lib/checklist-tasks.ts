@@ -1,6 +1,28 @@
 import * as XLSX from "xlsx";
 
-export type TaskStatus = "pending" | "fiscal" | "validated";
+/**
+ * Fluxo de validação:
+ * - "pending"     : não iniciada
+ * - "responsavel" : marcada pelo Responsável da Obra (AMARELO) → entra no "Previsto"
+ * - "validated"   : validada pelo Fiscal (VERDE) → entra no "Válido" (e também no "Previsto")
+ */
+export type TaskStatus = "pending" | "responsavel" | "validated";
+
+export interface Progress {
+  total: number;
+  /** Folhas validadas pelo fiscal (verde). */
+  validado: number;
+  /** Folhas marcadas só pelo responsável (amarelo). */
+  responsavel: number;
+  /** Validado + responsável (amarelo + verde). */
+  previsto: number;
+  /** % oficial: somente validadas pelo fiscal. */
+  validadoPct: number;
+  /** % previsto: validadas + marcadas pelo responsável. */
+  previstoPct: number;
+  /** % marcada pelo responsável (sem validação). */
+  responsavelPct: number;
+}
 
 export interface Task {
   id: string;
@@ -74,27 +96,34 @@ export function buildHierarchy(
   });
 }
 
-/** Percentual da macro: apenas folhas com status fiscal|validated contam como concluídas. */
-export function macroProgress(
-  tasks: Task[],
-  macroIdt: string,
-): { pct: number; done: number; total: number } {
+function computeProgress(leaves: Task[]): Progress {
+  const total = leaves.length;
+  const validado = leaves.filter((t) => t.status === "validated").length;
+  const responsavel = leaves.filter((t) => t.status === "responsavel").length;
+  const previsto = validado + responsavel;
+  const pct = (n: number) => (total === 0 ? 0 : Math.round((n / total) * 100));
+  return {
+    total,
+    validado,
+    responsavel,
+    previsto,
+    validadoPct: pct(validado),
+    previstoPct: pct(previsto),
+    responsavelPct: pct(responsavel),
+  };
+}
+
+/** Percentual da macro: amarelo = responsável, verde = validado pelo fiscal. */
+export function macroProgress(tasks: Task[], macroIdt: string): Progress {
   const leaves = tasks.filter(
     (t) => t.isLeaf && (t.idt === macroIdt || t.idt.startsWith(macroIdt + ".")),
   );
-  const total = leaves.length;
-  const done = leaves.filter((t) => t.status === "fiscal" || t.status === "validated").length;
-  const pct = total === 0 ? 0 : Math.round((done / total) * 100);
-  return { pct, done, total };
+  return computeProgress(leaves);
 }
 
 /** Avanço físico global (todas as folhas). */
-export function globalProgress(tasks: Task[]): { pct: number; done: number; total: number } {
-  const leaves = tasks.filter((t) => t.isLeaf);
-  const total = leaves.length;
-  const done = leaves.filter((t) => t.status === "fiscal" || t.status === "validated").length;
-  const pct = total === 0 ? 0 : Math.round((done / total) * 100);
-  return { pct, done, total };
+export function globalProgress(tasks: Task[]): Progress {
+  return computeProgress(tasks.filter((t) => t.isLeaf));
 }
 
 const IDT_KEYS = ["idt", "edt", "wbs", "outline number", "outlinenumber", "número de tópico", "estrutura"];
@@ -145,16 +174,16 @@ const today = () => new Date().toISOString().slice(0, 10);
 /** Dados de exemplo para demonstração. */
 export const SAMPLE_TASKS: Task[] = buildHierarchy([
   { idt: "1", name: "Serviços Preliminares" },
-  { idt: "1.1", name: "Mobilização", status: "validated", responsible: "Construtora Alfa", notes: "Concluída e validada." },
-  { idt: "1.2", name: "Instalações provisórias", status: "fiscal", responsible: "Construtora Alfa" },
+  { idt: "1.1", name: "Mobilização", status: "validated", responsible: "Construtora Alfa", notes: "Validada pelo fiscal." },
+  { idt: "1.2", name: "Instalações provisórias", status: "responsavel", responsible: "Construtora Alfa", notes: "Aguardando validação." },
   { idt: "1.3", name: "Tapumes", status: "pending" },
   { idt: "2", name: "Fundação" },
   { idt: "2.1", name: "Escavação", status: "validated", responsible: "Equipe de Campo" },
-  { idt: "2.2", name: "Lastro", status: "fiscal", responsible: "Equipe de Campo" },
+  { idt: "2.2", name: "Lastro", status: "responsavel", responsible: "Equipe de Campo" },
   { idt: "2.3", name: "Sapatas", status: "pending" },
   { idt: "2.4", name: "Blocos", status: "pending" },
   { idt: "3", name: "Estrutura" },
-  { idt: "3.1", name: "Fôrmas", status: "fiscal" },
+  { idt: "3.1", name: "Fôrmas", status: "responsavel" },
   { idt: "3.2", name: "Armadura", status: "pending" },
   { idt: "3.3", name: "Pilares", status: "pending" },
   { idt: "3.4", name: "Lajes", status: "pending" },
@@ -162,20 +191,23 @@ export const SAMPLE_TASKS: Task[] = buildHierarchy([
   { idt: "4.1", name: "Marcação", status: "pending" },
   { idt: "4.2", name: "Paredes", status: "pending" },
 ]).map((t) =>
-  t.status === "fiscal" || t.status === "validated"
-    ? { ...t, updatedAt: today(), updatedBy: t.status === "fiscal" ? "Fiscal" : "Responsável" }
+  t.status === "responsavel" || t.status === "validated"
+    ? { ...t, updatedAt: today(), updatedBy: t.status === "validated" ? "Fiscal" : "Responsável" }
     : t,
 );
 
-/** Regra de toggle por perfil. */
+/**
+ * Regra de toggle por perfil.
+ * - Responsável marca/desmarca sua etapa (amarelo).
+ * - Fiscal valida/invalida (verde). Ao invalidar, retorna ao estado de responsável se já havia marcação.
+ */
 export function nextStatus(current: TaskStatus, profile: "fiscal" | "responsavel"): TaskStatus {
-  if (profile === "fiscal") {
-    if (current === "pending") return "fiscal";
-    if (current === "fiscal") return "pending";
-    return "fiscal"; // validated -> fiscal
+  if (profile === "responsavel") {
+    if (current === "pending") return "responsavel";
+    if (current === "responsavel") return "pending";
+    return "responsavel"; // validated -> volta para marcação do responsável
   }
-  // responsável
-  if (current === "pending") return "validated";
-  if (current === "fiscal") return "validated";
-  return "pending"; // validated -> pending
+  // fiscal
+  if (current === "validated") return "pending";
+  return "validated"; // pending|responsavel -> validado
 }

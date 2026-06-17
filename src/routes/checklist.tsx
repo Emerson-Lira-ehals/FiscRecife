@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Check,
   ChevronDown,
   Copy,
   FileSpreadsheet,
+  Lock,
   MoreVertical,
   Paperclip,
   Plus,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AuthRequired } from "@/components/AuthRequired";
+import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
   SAMPLE_TASKS,
@@ -24,6 +26,7 @@ import {
   macroProgress,
   nextStatus,
   parseSpreadsheet,
+  type Progress,
   type Task,
   type TaskStatus,
 } from "@/lib/checklist-tasks";
@@ -55,8 +58,16 @@ export const Route = createFileRoute("/checklist")({
 type Profile = "fiscal" | "responsavel";
 
 function Checklist() {
+  const { role, isAdmin } = useAuth();
+  // Perfil de marcação travado pelo login: fiscal valida (verde), gestor é o responsável (amarelo).
+  const lockedProfile: Profile | null =
+    role === "fiscal" ? "fiscal" : role === "gestor" ? "responsavel" : null;
+  // Admin (acesso total) pode alternar entre os dois perfis; demais ficam travados no seu.
+  const canSwitch = isAdmin;
+  const canEdit = isAdmin || lockedProfile !== null;
+
   const [tasks, setTasks] = useState<Task[]>(SAMPLE_TASKS);
-  const [profile, setProfile] = useState<Profile>("fiscal");
+  const [profile, setProfile] = useState<Profile>(lockedProfile ?? "fiscal");
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(SAMPLE_TASKS.filter((t) => t.level === 0).map((t) => [t.id, true])),
@@ -65,6 +76,11 @@ function Checklist() {
   const [newOpen, setNewOpen] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Sincroniza o perfil ativo com o login quando ele estiver travado.
+  useEffect(() => {
+    if (lockedProfile && !isAdmin) setProfile(lockedProfile);
+  }, [lockedProfile, isAdmin]);
 
   const macros = useMemo(() => tasks.filter((t) => t.level === 0), [tasks]);
   const global = useMemo(() => globalProgress(tasks), [tasks]);
@@ -77,6 +93,10 @@ function Checklist() {
     (t.responsible ?? "").toLowerCase().includes(q);
 
   function toggleStatus(task: Task) {
+    if (!canEdit) {
+      toast.error("Seu perfil não tem permissão para marcar etapas.");
+      return;
+    }
     const ns = nextStatus(task.status, profile);
     setTasks((prev) =>
       prev.map((t) =>
@@ -91,6 +111,7 @@ function Checklist() {
       ),
     );
   }
+
 
   function toggleExpand(id: string) {
     setExpanded((p) => ({ ...p, [id]: !p[id] }));
@@ -150,28 +171,58 @@ function Checklist() {
       <div className="mb-6">
         <p className="text-xs font-medium text-muted-foreground">Obra · Hospital Recife Norte</p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">Checklist da Obra</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {global.done} de {global.total} atividades concluídas · {global.pct}% de avanço físico
-        </p>
+
+        {/* Indicadores: Válido (verde) x Previsto (amarelo) */}
+        <div className="mt-3 flex flex-wrap gap-3">
+          <StatChip
+            label="Avanço válido"
+            hint="Validado pelo fiscal"
+            value={`${global.validadoPct}%`}
+            sub={`${global.validado} de ${global.total}`}
+            tone="success"
+          />
+          <StatChip
+            label="Avanço previsto"
+            hint="Responsável + fiscal"
+            value={`${global.previstoPct}%`}
+            sub={`${global.previsto} de ${global.total}`}
+            tone="warning"
+          />
+          <StatChip
+            label="Aguardando validação"
+            hint="Marcado pelo responsável"
+            value={`${global.responsavelPct}%`}
+            sub={`${global.responsavel} etapa(s)`}
+            tone="muted"
+          />
+        </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          {/* Switch de perfil */}
-          <div className="inline-flex rounded-xl border border-border bg-card p-1 shadow-[var(--shadow-soft)]">
-            {(["fiscal", "responsavel"] as Profile[]).map((p) => (
-              <button
-                key={p}
-                onClick={() => setProfile(p)}
-                className={cn(
-                  "rounded-lg px-4 py-1.5 text-sm font-medium transition",
-                  profile === p
-                    ? "bg-primary text-primary-foreground shadow-[var(--shadow-soft)]"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {p === "fiscal" ? "Fiscal" : "Responsável"}
-              </button>
-            ))}
+          {/* Switch de perfil — travado conforme o login */}
+          <div className="inline-flex items-center rounded-xl border border-border bg-card p-1 shadow-[var(--shadow-soft)]">
+            {(["fiscal", "responsavel"] as Profile[]).map((p) => {
+              const allowed = canSwitch || profile === p;
+              return (
+                <button
+                  key={p}
+                  onClick={() => canSwitch && setProfile(p)}
+                  disabled={!allowed}
+                  title={!canSwitch && profile !== p ? "Perfil definido pelo seu login" : undefined}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition",
+                    profile === p
+                      ? "bg-primary text-primary-foreground shadow-[var(--shadow-soft)]"
+                      : "text-muted-foreground hover:text-foreground",
+                    !allowed && "cursor-not-allowed opacity-40 hover:text-muted-foreground",
+                  )}
+                >
+                  {p === "fiscal" ? "Fiscal" : "Responsável"}
+                  {!canSwitch && profile === p && <Lock className="h-3 w-3" />}
+                </button>
+              );
+            })}
           </div>
+
 
           <button
             onClick={() => fileRef.current?.click()}
@@ -304,6 +355,38 @@ function MenuItem({ children, onClick }: { children: React.ReactNode; onClick: (
   );
 }
 
+function StatChip({
+  label,
+  hint,
+  value,
+  sub,
+  tone,
+}: {
+  label: string;
+  hint: string;
+  value: string;
+  sub: string;
+  tone: "success" | "warning" | "muted";
+}) {
+  const toneCls =
+    tone === "success"
+      ? "text-success"
+      : tone === "warning"
+        ? "text-warning"
+        : "text-muted-foreground";
+  return (
+    <div className="rounded-xl border border-border bg-card px-4 py-2.5 shadow-[var(--shadow-soft)]">
+      <div className="flex items-baseline gap-2">
+        <span className={cn("text-2xl font-bold tabular-nums", toneCls)}>{value}</span>
+        <span className="text-xs font-semibold text-foreground">{label}</span>
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        {sub} · {hint}
+      </p>
+    </div>
+  );
+}
+
 function MacroCard({
   macro,
   prog,
@@ -314,7 +397,7 @@ function MacroCard({
   onToggleStatus,
 }: {
   macro: Task;
-  prog: { pct: number; done: number; total: number };
+  prog: Progress;
   open: boolean;
   onToggle: () => void;
   children: Task[];
@@ -330,19 +413,30 @@ function MacroCard({
         <div className="min-w-0 flex-1">
           <p className="truncate text-base font-semibold tracking-tight text-foreground">{macro.name}</p>
           <p className="text-xs text-muted-foreground">
-            {prog.done} de {prog.total} micro etapas concluídas
+            {prog.validado} validada(s) · {prog.responsavel} aguardando · {prog.total} micro etapas
           </p>
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
+          {/* Barra: verde (válido) preenchido, amarelo (previsto) como projeção */}
+          <div className="relative mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
             <motion.div
-              className="h-full rounded-full"
-              style={{ background: "var(--gradient-sky)" }}
+              className="absolute inset-y-0 left-0 rounded-full bg-warning/60"
               initial={false}
-              animate={{ width: `${prog.pct}%` }}
+              animate={{ width: `${prog.previstoPct}%` }}
+              transition={{ type: "spring", stiffness: 120, damping: 20 }}
+            />
+            <motion.div
+              className="absolute inset-y-0 left-0 rounded-full bg-success"
+              initial={false}
+              animate={{ width: `${prog.validadoPct}%` }}
               transition={{ type: "spring", stiffness: 120, damping: 20 }}
             />
           </div>
         </div>
-        <span className="text-xl font-bold text-primary">{prog.pct}%</span>
+        <div className="shrink-0 text-right">
+          <span className="block text-xl font-bold text-success tabular-nums">{prog.validadoPct}%</span>
+          <span className="block text-xs font-semibold text-warning tabular-nums">
+            {prog.previstoPct}% prev.
+          </span>
+        </div>
         <ChevronDown
           className={cn("h-5 w-5 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")}
         />
@@ -378,14 +472,21 @@ function StatusBox({ status, onClick }: { status: TaskStatus; onClick: () => voi
     <button
       onClick={onClick}
       aria-label="Alterar status"
+      title={
+        status === "validated"
+          ? "Validado pelo fiscal"
+          : status === "responsavel"
+            ? "Marcado pelo responsável (aguardando validação)"
+            : "Pendente"
+      }
       className={cn(
         "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border-2 transition",
         status === "pending" && "border-border bg-background hover:border-primary/50",
-        status === "fiscal" && "border-success bg-success text-success-foreground",
-        status === "validated" && "border-warning bg-warning text-warning-foreground",
+        status === "responsavel" && "border-warning bg-warning text-warning-foreground",
+        status === "validated" && "border-success bg-success text-success-foreground",
       )}
     >
-      {status === "fiscal" && <Check className="h-4 w-4" strokeWidth={3} />}
+      {status === "responsavel" && <Check className="h-4 w-4" strokeWidth={3} />}
       {status === "validated" && <ShieldCheck className="h-4 w-4" strokeWidth={2.5} />}
     </button>
   );
