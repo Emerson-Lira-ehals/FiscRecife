@@ -96,27 +96,34 @@ export function buildHierarchy(
   });
 }
 
-/** Percentual da macro: apenas folhas com status fiscal|validated contam como concluídas. */
-export function macroProgress(
-  tasks: Task[],
-  macroIdt: string,
-): { pct: number; done: number; total: number } {
+function computeProgress(leaves: Task[]): Progress {
+  const total = leaves.length;
+  const validado = leaves.filter((t) => t.status === "validated").length;
+  const responsavel = leaves.filter((t) => t.status === "responsavel").length;
+  const previsto = validado + responsavel;
+  const pct = (n: number) => (total === 0 ? 0 : Math.round((n / total) * 100));
+  return {
+    total,
+    validado,
+    responsavel,
+    previsto,
+    validadoPct: pct(validado),
+    previstoPct: pct(previsto),
+    responsavelPct: pct(responsavel),
+  };
+}
+
+/** Percentual da macro: amarelo = responsável, verde = validado pelo fiscal. */
+export function macroProgress(tasks: Task[], macroIdt: string): Progress {
   const leaves = tasks.filter(
     (t) => t.isLeaf && (t.idt === macroIdt || t.idt.startsWith(macroIdt + ".")),
   );
-  const total = leaves.length;
-  const done = leaves.filter((t) => t.status === "fiscal" || t.status === "validated").length;
-  const pct = total === 0 ? 0 : Math.round((done / total) * 100);
-  return { pct, done, total };
+  return computeProgress(leaves);
 }
 
 /** Avanço físico global (todas as folhas). */
-export function globalProgress(tasks: Task[]): { pct: number; done: number; total: number } {
-  const leaves = tasks.filter((t) => t.isLeaf);
-  const total = leaves.length;
-  const done = leaves.filter((t) => t.status === "fiscal" || t.status === "validated").length;
-  const pct = total === 0 ? 0 : Math.round((done / total) * 100);
-  return { pct, done, total };
+export function globalProgress(tasks: Task[]): Progress {
+  return computeProgress(tasks.filter((t) => t.isLeaf));
 }
 
 const IDT_KEYS = ["idt", "edt", "wbs", "outline number", "outlinenumber", "número de tópico", "estrutura"];
