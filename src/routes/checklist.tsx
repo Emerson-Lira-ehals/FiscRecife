@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Check,
   ChevronDown,
   Copy,
   FileSpreadsheet,
+  Lock,
   MoreVertical,
   Paperclip,
   Plus,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AuthRequired } from "@/components/AuthRequired";
+import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import {
   SAMPLE_TASKS,
@@ -24,6 +26,7 @@ import {
   macroProgress,
   nextStatus,
   parseSpreadsheet,
+  type Progress,
   type Task,
   type TaskStatus,
 } from "@/lib/checklist-tasks";
