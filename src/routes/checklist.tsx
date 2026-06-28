@@ -470,7 +470,28 @@ function Checklist() {
       {newOpen && (
         <NewTaskModal macros={macros} onClose={() => setNewOpen(false)} onCreate={addTask} />
       )}
-      {copyOpen && <CopyModal onClose={() => setCopyOpen(false)} />}
+      {copyOpen && (
+        <CopyModal
+          obras={obras.filter((o) => o.id !== selectedObraId)}
+          onClose={() => setCopyOpen(false)}
+          onConfirm={(fromId) => {
+            const src = loadObraTasks(fromId) ?? SAMPLE_TASKS;
+            const cloned = src.map((t) => ({
+              ...t,
+              status: "pending" as TaskStatus,
+              updatedAt: undefined,
+              updatedBy: undefined,
+            }));
+            setTasks(cloned);
+            setExpanded(
+              Object.fromEntries(cloned.filter((t) => t.level === 0).map((t) => [t.id, true])),
+            );
+            setCopyOpen(false);
+            const nome = obras.find((o) => o.id === fromId)?.nome ?? "obra";
+            toast.success(`Checklist copiado de "${nome}".`);
+          }}
+        />
+      )}
     </div>
   );
 }
