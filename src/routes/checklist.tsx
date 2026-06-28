@@ -781,50 +781,55 @@ function NewTaskModal({
   );
 }
 
-const OBRAS_DISPONIVEIS = [
-  "Hospital Recife Norte",
-  "Escola Municipal Boa Vista",
-  "Requalificação da Av. Caxangá",
-  "UPA Cordeiro",
-];
-
-function CopyModal({ onClose }: { onClose: () => void }) {
-  const [selected, setSelected] = useState(OBRAS_DISPONIVEIS[0]);
+function CopyModal({
+  obras,
+  onClose,
+  onConfirm,
+}: {
+  obras: Obra[];
+  onClose: () => void;
+  onConfirm: (fromId: string) => void;
+}) {
+  const [selected, setSelected] = useState(obras[0]?.id ?? "");
   return (
     <ModalShell title="Copiar de Outra Obra" onClose={onClose}>
       <p className="mb-3 text-sm text-muted-foreground">
-        Selecione a obra cujo checklist servirá de base.
+        Selecione a obra cujo checklist servirá de base. As etapas serão copiadas e reiniciadas.
       </p>
-      <div className="space-y-2">
-        {OBRAS_DISPONIVEIS.map((o) => (
-          <label
-            key={o}
-            className={cn(
-              "flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition",
-              selected === o ? "border-primary bg-accent" : "border-border hover:border-primary/40",
-            )}
-          >
-            <input
-              type="radio"
-              name="obra"
-              checked={selected === o}
-              onChange={() => setSelected(o)}
-              className="accent-primary"
-            />
-            <span className="text-foreground">{o}</span>
-          </label>
-        ))}
-      </div>
+      {obras.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
+          Não há outras obras disponíveis para copiar.
+        </p>
+      ) : (
+        <div className="max-h-72 space-y-2 overflow-y-auto">
+          {obras.map((o) => (
+            <label
+              key={o.id}
+              className={cn(
+                "flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition",
+                selected === o.id ? "border-primary bg-accent" : "border-border hover:border-primary/40",
+              )}
+            >
+              <input
+                type="radio"
+                name="obra"
+                checked={selected === o.id}
+                onChange={() => setSelected(o.id)}
+                className="accent-primary"
+              />
+              <span className="text-foreground">{o.nome}</span>
+            </label>
+          ))}
+        </div>
+      )}
       <div className="mt-5 flex justify-end gap-2">
         <button onClick={onClose} className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:border-primary/40">
           Cancelar
         </button>
         <button
-          onClick={() => {
-            toast.success(`Checklist copiado de "${selected}".`);
-            onClose();
-          }}
-          className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)]"
+          disabled={!selected}
+          onClick={() => selected && onConfirm(selected)}
+          className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)] disabled:cursor-not-allowed disabled:opacity-50"
           style={{ background: "var(--gradient-sky)" }}
         >
           <Upload className="h-4 w-4" /> Confirmar cópia
@@ -833,3 +838,4 @@ function CopyModal({ onClose }: { onClose: () => void }) {
     </ModalShell>
   );
 }
+
