@@ -58,7 +58,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export const Route = createFileRoute("/dashboard")({
+export const Route = createFileRoute("/dashboard/")({
   head: () => ({ meta: [{ title: "Dashboard — FiscRecife" }] }),
   component: () => (
     <AuthRequired>
