@@ -15,6 +15,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
 import { UIProvider } from "@/lib/ui-context";
 import { AppShell } from "@/components/AppShell";
+import { registerServiceWorker } from "@/lib/pwa";
+import { startSyncEngine } from "@/lib/sync";
 
 function NotFoundComponent() {
   return (
@@ -80,16 +82,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
+      {
+        name: "viewport",
+        content:
+          "width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5",
+      },
+      { title: "FiscRecife · Fiscalização de Obras" },
       { name: "description", content: "FiscRecife: A web app for tracking, monitoring, and ensuring transparency in Recife's public works." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
+      { name: "theme-color", content: "#0284C7" },
+      { name: "application-name", content: "FiscRecife" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "FiscRecife" },
+      { property: "og:title", content: "FiscRecife · Fiscalização de Obras" },
       { property: "og:description", content: "FiscRecife: A web app for tracking, monitoring, and ensuring transparency in Recife's public works." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
-      { name: "twitter:title", content: "Lovable App" },
+      { name: "twitter:title", content: "FiscRecife · Fiscalização de Obras" },
       { name: "twitter:description", content: "FiscRecife: A web app for tracking, monitoring, and ensuring transparency in Recife's public works." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/03006bec-be67-4860-9f7e-798649c87404/id-preview-7c65814e--01f98597-b911-40e4-8c6d-a07606cdd9e3.lovable.app-1781020513905.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/03006bec-be67-4860-9f7e-798649c87404/id-preview-7c65814e--01f98597-b911-40e4-8c6d-a07606cdd9e3.lovable.app-1781020513905.png" },
@@ -99,6 +111,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32x32.png" },
+      { rel: "icon", type: "image/png", sizes: "16x16", href: "/favicon-16x16.png" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -123,6 +139,11 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    registerServiceWorker();
+    startSyncEngine();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
