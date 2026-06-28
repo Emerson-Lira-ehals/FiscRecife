@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { useUI } from "@/lib/ui-context";
 import { ROLE_LABELS } from "@/lib/obra-utils";
 import { Button } from "@/components/ui/button";
+import { SyncStatusChip } from "@/components/OfflineIndicator";
 import logo from "@/assets/logo-fiscrecife.svg";
 
 export function AppHeader() {
