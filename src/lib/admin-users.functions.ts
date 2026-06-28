@@ -4,12 +4,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const ROLES = ["admin", "prefeitura", "fiscal", "gestor", "agente"] as const;
 
-async function assertAdmin(context: { supabase: any; userId: string }) {
-  const { data, error } = await context.supabase.rpc("is_admin", {
+async function assertCanManageUsers(context: { supabase: any; userId: string }) {
+  const { data, error } = await context.supabase.rpc("can_manage_users", {
     _user_id: context.userId,
   });
   if (error) throw new Error(error.message);
-  if (!data) throw new Error("Acesso negado: somente administradores.");
+  if (!data) throw new Error("Acesso negado: somente administradores ou prefeitura.");
 }
 
 export const adminCreateUser = createServerFn({ method: "POST" })
@@ -25,7 +25,7 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertCanManageUsers(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
@@ -43,7 +43,7 @@ export const adminSetPassword = createServerFn({ method: "POST" })
     z.object({ userId: z.string().uuid(), password: z.string().min(6) }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertCanManageUsers(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, {
       password: data.password,
@@ -58,7 +58,7 @@ export const adminDeleteUser = createServerFn({ method: "POST" })
     z.object({ userId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertCanManageUsers(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
     if (error) throw new Error(error.message);

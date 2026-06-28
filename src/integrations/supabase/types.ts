@@ -446,12 +446,14 @@ export type Database = {
           descricao: string
           empreiteira: string
           endereco: string
+          estado: string
           fiscal_id: string | null
           foto_principal: string | null
           gestor_id: string | null
           id: string
           latitude: number | null
           longitude: number | null
+          municipio: string
           nome: string
           orgao_responsavel: string
           percentual_concluido: number
@@ -476,12 +478,14 @@ export type Database = {
           descricao?: string
           empreiteira?: string
           endereco?: string
+          estado?: string
           fiscal_id?: string | null
           foto_principal?: string | null
           gestor_id?: string | null
           id?: string
           latitude?: number | null
           longitude?: number | null
+          municipio?: string
           nome: string
           orgao_responsavel?: string
           percentual_concluido?: number
@@ -506,12 +510,14 @@ export type Database = {
           descricao?: string
           empreiteira?: string
           endereco?: string
+          estado?: string
           fiscal_id?: string | null
           foto_principal?: string | null
           gestor_id?: string | null
           id?: string
           latitude?: number | null
           longitude?: number | null
+          municipio?: string
           nome?: string
           orgao_responsavel?: string
           percentual_concluido?: number
@@ -570,6 +576,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_users: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

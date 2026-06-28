@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  Building2,
   Check,
   ChevronDown,
   Copy,
@@ -18,6 +20,8 @@ import {
 import { toast } from "sonner";
 import { AuthRequired } from "@/components/AuthRequired";
 import { useAuth } from "@/lib/auth";
+import { fetchObras } from "@/lib/queries";
+import type { Obra } from "@/lib/obra-utils";
 import { cn } from "@/lib/utils";
 import {
   SAMPLE_TASKS,
@@ -30,6 +34,26 @@ import {
   type Task,
   type TaskStatus,
 } from "@/lib/checklist-tasks";
+
+const STORAGE_PREFIX = "fiscrecife:checklist:";
+
+function loadObraTasks(obraId: string): Task[] | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_PREFIX + obraId);
+    if (!raw) return null;
+    return JSON.parse(raw) as Task[];
+  } catch {
+    return null;
+  }
+}
+
+function saveObraTasks(obraId: string, tasks: Task[]) {
+  try {
+    localStorage.setItem(STORAGE_PREFIX + obraId, JSON.stringify(tasks));
+  } catch {
+    /* armazenamento indisponível */
+  }
+}
 
 export const Route = createFileRoute("/checklist")({
   head: () => ({
@@ -66,16 +90,51 @@ function Checklist() {
   const canSwitch = isAdmin;
   const canEdit = isAdmin || lockedProfile !== null;
 
-  const [tasks, setTasks] = useState<Task[]>(SAMPLE_TASKS);
+  const { data: obras = [] } = useQuery({ queryKey: ["obras"], queryFn: fetchObras });
+
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [selectedObraId, setSelectedObraId] = useState<string>("");
+  const [obraSearch, setObraSearch] = useState("");
+  const [obraPickerOpen, setObraPickerOpen] = useState(false);
   const [profile, setProfile] = useState<Profile>(lockedProfile ?? "fiscal");
   const [query, setQuery] = useState("");
-  const [expanded, setExpanded] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(SAMPLE_TASKS.filter((t) => t.level === 0).map((t) => [t.id, true])),
-  );
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [menuOpen, setMenuOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Seleciona automaticamente a primeira obra do catálogo quando carregar.
+  useEffect(() => {
+    if (!selectedObraId && obras.length > 0) setSelectedObraId(obras[0].id);
+  }, [obras, selectedObraId]);
+
+  const selectedObra = useMemo(
+    () => obras.find((o) => o.id === selectedObraId) ?? null,
+    [obras, selectedObraId],
+  );
+
+  // Carrega a checklist específica da obra selecionada (isolada por obra).
+  useEffect(() => {
+    if (!selectedObraId) return;
+    const stored = loadObraTasks(selectedObraId);
+    const next = stored ?? SAMPLE_TASKS;
+    setTasks(next);
+    setExpanded(Object.fromEntries(next.filter((t) => t.level === 0).map((t) => [t.id, true])));
+  }, [selectedObraId]);
+
+  // Persiste alterações da checklist por obra.
+  useEffect(() => {
+    if (selectedObraId) saveObraTasks(selectedObraId, tasks);
+  }, [selectedObraId, tasks]);
+
+  const obrasFiltradas = useMemo(() => {
+    const s = obraSearch.trim().toLowerCase();
+    if (!s) return obras;
+    return obras.filter(
+      (o) => o.nome.toLowerCase().includes(s) || (o.bairro ?? "").toLowerCase().includes(s),
+    );
+  }, [obras, obraSearch]);
 
   // Sincroniza o perfil ativo com o login quando ele estiver travado.
   useEffect(() => {
@@ -169,8 +228,80 @@ function Checklist() {
 
       {/* Cabeçalho */}
       <div className="mb-6">
-        <p className="text-xs font-medium text-muted-foreground">Obra · Hospital Recife Norte</p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">Checklist da Obra</h1>
+        <p className="text-xs font-medium text-muted-foreground">
+          {selectedObra ? `Obra · ${selectedObra.bairro ?? selectedObra.municipio ?? ""}` : "Checklist Fiscal"}
+        </p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+          {selectedObra ? selectedObra.nome : "Checklist da Obra"}
+        </h1>
+
+        {/* Seletor de obra com busca/autocomplete */}
+        <div className="relative mt-4 max-w-md">
+          <button
+            type="button"
+            onClick={() => setObraPickerOpen((o) => !o)}
+            className="flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left text-sm font-medium text-foreground transition hover:border-primary/40"
+          >
+            <span className="flex items-center gap-2 truncate">
+              <Building2 className="h-4 w-4 shrink-0 text-primary" />
+              <span className="truncate">
+                {selectedObra ? selectedObra.nome : "Selecione uma obra"}
+              </span>
+            </span>
+            <ChevronDown className={cn("h-4 w-4 shrink-0 transition", obraPickerOpen && "rotate-180")} />
+          </button>
+          <AnimatePresence>
+            {obraPickerOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setObraPickerOpen(false)} />
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="absolute left-0 right-0 z-20 mt-2 overflow-hidden rounded-xl border border-border bg-popover shadow-[var(--shadow-lift)]"
+                >
+                  <div className="relative border-b border-border p-2">
+                    <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      autoFocus
+                      value={obraSearch}
+                      onChange={(e) => setObraSearch(e.target.value)}
+                      placeholder="Buscar obra pelo nome..."
+                      className="h-10 w-full rounded-lg border border-border bg-card pl-10 pr-3 text-sm outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div className="max-h-72 overflow-y-auto py-1">
+                    {obrasFiltradas.length === 0 && (
+                      <p className="px-4 py-3 text-sm text-muted-foreground">Nenhuma obra encontrada.</p>
+                    )}
+                    {obrasFiltradas.map((o) => (
+                      <button
+                        key={o.id}
+                        onClick={() => {
+                          setSelectedObraId(o.id);
+                          setObraPickerOpen(false);
+                          setObraSearch("");
+                        }}
+                        className={cn(
+                          "block w-full px-4 py-2.5 text-left text-sm transition hover:bg-secondary",
+                          o.id === selectedObraId
+                            ? "bg-accent font-semibold text-foreground"
+                            : "text-popover-foreground",
+                        )}
+                      >
+                        <span className="block truncate">{o.nome}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {o.bairro ?? ""} {o.municipio ? `· ${o.municipio}` : ""}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+        </div>
+
 
         {/* Indicadores: Válido (verde) x Previsto (amarelo) */}
         <div className="mt-3 flex flex-wrap gap-3">
@@ -339,7 +470,28 @@ function Checklist() {
       {newOpen && (
         <NewTaskModal macros={macros} onClose={() => setNewOpen(false)} onCreate={addTask} />
       )}
-      {copyOpen && <CopyModal onClose={() => setCopyOpen(false)} />}
+      {copyOpen && (
+        <CopyModal
+          obras={obras.filter((o) => o.id !== selectedObraId)}
+          onClose={() => setCopyOpen(false)}
+          onConfirm={(fromId) => {
+            const src = loadObraTasks(fromId) ?? SAMPLE_TASKS;
+            const cloned = src.map((t) => ({
+              ...t,
+              status: "pending" as TaskStatus,
+              updatedAt: undefined,
+              updatedBy: undefined,
+            }));
+            setTasks(cloned);
+            setExpanded(
+              Object.fromEntries(cloned.filter((t) => t.level === 0).map((t) => [t.id, true])),
+            );
+            setCopyOpen(false);
+            const nome = obras.find((o) => o.id === fromId)?.nome ?? "obra";
+            toast.success(`Checklist copiado de "${nome}".`);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -629,50 +781,55 @@ function NewTaskModal({
   );
 }
 
-const OBRAS_DISPONIVEIS = [
-  "Hospital Recife Norte",
-  "Escola Municipal Boa Vista",
-  "Requalificação da Av. Caxangá",
-  "UPA Cordeiro",
-];
-
-function CopyModal({ onClose }: { onClose: () => void }) {
-  const [selected, setSelected] = useState(OBRAS_DISPONIVEIS[0]);
+function CopyModal({
+  obras,
+  onClose,
+  onConfirm,
+}: {
+  obras: Obra[];
+  onClose: () => void;
+  onConfirm: (fromId: string) => void;
+}) {
+  const [selected, setSelected] = useState(obras[0]?.id ?? "");
   return (
     <ModalShell title="Copiar de Outra Obra" onClose={onClose}>
       <p className="mb-3 text-sm text-muted-foreground">
-        Selecione a obra cujo checklist servirá de base.
+        Selecione a obra cujo checklist servirá de base. As etapas serão copiadas e reiniciadas.
       </p>
-      <div className="space-y-2">
-        {OBRAS_DISPONIVEIS.map((o) => (
-          <label
-            key={o}
-            className={cn(
-              "flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition",
-              selected === o ? "border-primary bg-accent" : "border-border hover:border-primary/40",
-            )}
-          >
-            <input
-              type="radio"
-              name="obra"
-              checked={selected === o}
-              onChange={() => setSelected(o)}
-              className="accent-primary"
-            />
-            <span className="text-foreground">{o}</span>
-          </label>
-        ))}
-      </div>
+      {obras.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-border bg-card p-6 text-center text-sm text-muted-foreground">
+          Não há outras obras disponíveis para copiar.
+        </p>
+      ) : (
+        <div className="max-h-72 space-y-2 overflow-y-auto">
+          {obras.map((o) => (
+            <label
+              key={o.id}
+              className={cn(
+                "flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition",
+                selected === o.id ? "border-primary bg-accent" : "border-border hover:border-primary/40",
+              )}
+            >
+              <input
+                type="radio"
+                name="obra"
+                checked={selected === o.id}
+                onChange={() => setSelected(o.id)}
+                className="accent-primary"
+              />
+              <span className="text-foreground">{o.nome}</span>
+            </label>
+          ))}
+        </div>
+      )}
       <div className="mt-5 flex justify-end gap-2">
         <button onClick={onClose} className="rounded-xl border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:border-primary/40">
           Cancelar
         </button>
         <button
-          onClick={() => {
-            toast.success(`Checklist copiado de "${selected}".`);
-            onClose();
-          }}
-          className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)]"
+          disabled={!selected}
+          onClick={() => selected && onConfirm(selected)}
+          className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-soft)] disabled:cursor-not-allowed disabled:opacity-50"
           style={{ background: "var(--gradient-sky)" }}
         >
           <Upload className="h-4 w-4" /> Confirmar cópia
@@ -681,3 +838,4 @@ function CopyModal({ onClose }: { onClose: () => void }) {
     </ModalShell>
   );
 }
+

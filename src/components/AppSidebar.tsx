@@ -1,5 +1,14 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LogIn, LayoutDashboard, FileBarChart, ClipboardCheck, Users, type LucideIcon, X } from "lucide-react";
+import {
+  LogIn,
+  LayoutDashboard,
+  PieChart,
+  FileBarChart,
+  ClipboardCheck,
+  Users,
+  type LucideIcon,
+  X,
+} from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useUI } from "@/lib/ui-context";
 import { useAuth } from "@/lib/auth";
@@ -12,22 +21,29 @@ interface NavItem {
   icon: LucideIcon;
   requiresAuth: boolean;
   requiresAdmin?: boolean;
+  requiresManageUsers?: boolean;
 }
 
 const items: NavItem[] = [
   { label: "Login", to: "/auth", icon: LogIn, requiresAuth: false },
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard, requiresAuth: true },
+  { label: "Dashboard Geral", to: "/dashboard/geral", icon: PieChart, requiresAuth: true },
   { label: "Relatórios", to: "/relatorios", icon: FileBarChart, requiresAuth: true },
   { label: "Checklist Fiscal", to: "/checklist", icon: ClipboardCheck, requiresAuth: true },
-  { label: "Usuários", to: "/admin/usuarios", icon: Users, requiresAuth: true, requiresAdmin: true },
+  { label: "Usuários", to: "/admin/usuarios", icon: Users, requiresAuth: true, requiresManageUsers: true },
 ];
 
 export function AppSidebar() {
   const { sidebarOpen, setSidebarOpen } = useUI();
-  const { isAuthenticated, isAdmin, role } = useAuth();
+  const { isAuthenticated, isAdmin, can, role } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  const visibleItems = items.filter((item) => !item.requiresAdmin || isAdmin);
+  const canManageUsers = isAdmin || can("prefeitura");
+  const visibleItems = items.filter((item) => {
+    if (item.requiresAdmin && !isAdmin) return false;
+    if (item.requiresManageUsers && !canManageUsers) return false;
+    return true;
+  });
 
   return (
     <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>

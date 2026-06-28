@@ -31,6 +31,16 @@ export function resolveFoto(ref: string | null | undefined): string {
   return PLACEHOLDER;
 }
 
+/** A reference that lives in private Storage (needs a signed URL), not an asset key or direct URL. */
+export function isStoredFoto(ref: string | null | undefined): boolean {
+  if (!ref) return false;
+  if (imageMap[ref]) return false;
+  if (ref.startsWith("http") || ref.startsWith("data:") || ref.startsWith("/")) return false;
+  return true;
+}
+
+export const FOTO_PLACEHOLDER = PLACEHOLDER;
+
 export const ROLE_LABELS: Record<AppRole, string> = {
   admin: "Administrador Master",
   prefeitura: "Prefeitura",

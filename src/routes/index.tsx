@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Building2, MapPin } from "lucide-react";
+import { ArrowRight, Building2, MapPin, Plus } from "lucide-react";
 import { fetchObras } from "@/lib/queries";
 import { useUI } from "@/lib/ui-context";
+import { useAuth } from "@/lib/auth";
 import { StatusBadge } from "@/components/StatusBadge";
-import { resolveFoto, formatCurrency } from "@/lib/obra-utils";
+import { ObraImage } from "@/components/ObraImage";
+import { formatCurrency } from "@/lib/obra-utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -29,6 +31,8 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const { search } = useUI();
+  const { can } = useAuth();
+  const canCreate = can("prefeitura");
   const { data: obras, isLoading, error } = useQuery({ queryKey: ["obras"], queryFn: fetchObras });
 
   const filtered = (obras ?? []).filter((o) =>
@@ -56,7 +60,7 @@ function Index() {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
-        <div className="mb-6 flex items-end justify-between gap-4">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-foreground">
               Catálogo de obras
@@ -65,6 +69,13 @@ function Index() {
               {isLoading ? "Carregando..." : `${filtered.length} obra(s) encontrada(s)`}
             </p>
           </div>
+          {canCreate && (
+            <Button asChild>
+              <Link to="/obras/nova">
+                <Plus className="mr-1 h-4 w-4" /> Adicionar Nova Obra
+              </Link>
+            </Button>
+          )}
         </div>
 
         {error && (
@@ -91,8 +102,8 @@ function Index() {
                 className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-card)] transition hover:shadow-[var(--shadow-elevated)]"
               >
                 <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-                  <img
-                    src={resolveFoto(obra.foto_principal)}
+                  <ObraImage
+                    src={obra.foto_principal}
                     alt={obra.nome}
                     loading="lazy"
                     className="h-full w-full object-cover transition duration-500 group-hover:scale-105"

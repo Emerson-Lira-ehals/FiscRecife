@@ -1,0 +1,3 @@
+ALTER TABLE public.obras
+  ADD COLUMN IF NOT EXISTS municipio text NOT NULL DEFAULT 'Recife',
+  ADD COLUMN IF NOT EXISTS estado text NOT NULL DEFAULT 'PE';

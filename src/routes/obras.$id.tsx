@@ -25,8 +25,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ObraImage } from "@/components/ObraImage";
 import {
-  resolveFoto,
   formatCurrency,
   formatDate,
   formatDateTime,
@@ -166,8 +166,8 @@ function ObraDetail() {
       {/* Galeria */}
       <section className="mb-8">
         <div className="overflow-hidden rounded-xl border border-border bg-muted">
-          <img
-            src={resolveFoto(fotos[activeFoto]?.url ?? obra.foto_principal)}
+          <ObraImage
+            src={fotos[activeFoto]?.url ?? obra.foto_principal}
             alt={fotos[activeFoto]?.legenda ?? obra.nome}
             className="aspect-[16/9] w-full object-cover"
           />
@@ -182,7 +182,7 @@ function ObraDetail() {
                   i === activeFoto ? "border-primary" : "border-transparent opacity-70 hover:opacity-100"
                 }`}
               >
-                <img src={resolveFoto(f.url)} alt={f.legenda} className="h-16 w-24 object-cover" />
+                <ObraImage src={f.url} alt={f.legenda} className="h-16 w-24 object-cover" />
                 {f.tipo === "ilustrativa" && (
                   <span className="absolute bottom-0 left-0 right-0 bg-navy/80 px-1 py-0.5 text-[9px] text-navy-foreground">
                     Previsão final

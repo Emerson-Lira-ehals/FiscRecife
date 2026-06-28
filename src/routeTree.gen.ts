@@ -14,7 +14,9 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ChecklistRouteImport } from './routes/checklist'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ObrasNovaRouteImport } from './routes/obras.nova'
 import { Route as ObrasIdRouteImport } from './routes/obras.$id'
+import { Route as DashboardGeralRouteImport } from './routes/dashboard.geral'
 import { Route as AdminUsuariosRouteImport } from './routes/admin.usuarios'
 
 const RelatoriosRoute = RelatoriosRouteImport.update({
@@ -42,10 +44,20 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ObrasNovaRoute = ObrasNovaRouteImport.update({
+  id: '/obras/nova',
+  path: '/obras/nova',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ObrasIdRoute = ObrasIdRouteImport.update({
   id: '/obras/$id',
   path: '/obras/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardGeralRoute = DashboardGeralRouteImport.update({
+  id: '/geral',
+  path: '/geral',
+  getParentRoute: () => DashboardRoute,
 } as any)
 const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
   id: '/admin/usuarios',
@@ -57,29 +69,35 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/checklist': typeof ChecklistRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/relatorios': typeof RelatoriosRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
+  '/dashboard/geral': typeof DashboardGeralRoute
   '/obras/$id': typeof ObrasIdRoute
+  '/obras/nova': typeof ObrasNovaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/checklist': typeof ChecklistRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/relatorios': typeof RelatoriosRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
+  '/dashboard/geral': typeof DashboardGeralRoute
   '/obras/$id': typeof ObrasIdRoute
+  '/obras/nova': typeof ObrasNovaRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/checklist': typeof ChecklistRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/relatorios': typeof RelatoriosRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
+  '/dashboard/geral': typeof DashboardGeralRoute
   '/obras/$id': typeof ObrasIdRoute
+  '/obras/nova': typeof ObrasNovaRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -90,7 +108,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/relatorios'
     | '/admin/usuarios'
+    | '/dashboard/geral'
     | '/obras/$id'
+    | '/obras/nova'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -99,7 +119,9 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/relatorios'
     | '/admin/usuarios'
+    | '/dashboard/geral'
     | '/obras/$id'
+    | '/obras/nova'
   id:
     | '__root__'
     | '/'
@@ -108,17 +130,20 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/relatorios'
     | '/admin/usuarios'
+    | '/dashboard/geral'
     | '/obras/$id'
+    | '/obras/nova'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   ChecklistRoute: typeof ChecklistRoute
-  DashboardRoute: typeof DashboardRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
   RelatoriosRoute: typeof RelatoriosRoute
   AdminUsuariosRoute: typeof AdminUsuariosRoute
   ObrasIdRoute: typeof ObrasIdRoute
+  ObrasNovaRoute: typeof ObrasNovaRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -158,12 +183,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/obras/nova': {
+      id: '/obras/nova'
+      path: '/obras/nova'
+      fullPath: '/obras/nova'
+      preLoaderRoute: typeof ObrasNovaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/obras/$id': {
       id: '/obras/$id'
       path: '/obras/$id'
       fullPath: '/obras/$id'
       preLoaderRoute: typeof ObrasIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/dashboard/geral': {
+      id: '/dashboard/geral'
+      path: '/geral'
+      fullPath: '/dashboard/geral'
+      preLoaderRoute: typeof DashboardGeralRouteImport
+      parentRoute: typeof DashboardRoute
     }
     '/admin/usuarios': {
       id: '/admin/usuarios'
@@ -175,14 +214,27 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface DashboardRouteChildren {
+  DashboardGeralRoute: typeof DashboardGeralRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardGeralRoute: DashboardGeralRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   ChecklistRoute: ChecklistRoute,
-  DashboardRoute: DashboardRoute,
+  DashboardRoute: DashboardRouteWithChildren,
   RelatoriosRoute: RelatoriosRoute,
   AdminUsuariosRoute: AdminUsuariosRoute,
   ObrasIdRoute: ObrasIdRoute,
+  ObrasNovaRoute: ObrasNovaRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
