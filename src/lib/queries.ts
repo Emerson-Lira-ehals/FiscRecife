@@ -333,3 +333,109 @@ export async function importarCronograma(input: ImportarCronogramaInput) {
 }
 
 
+
+// ---- Dashboard Geral: orçamento consolidado de todas as obras ----
+
+export interface SetorTotal {
+  categoria: string;
+  valor: number;
+}
+
+/** Soma os valores de orçamento agrupados por setor/categoria considerando TODAS as obras. */
+export async function fetchOrcamentoTodos(): Promise<SetorTotal[]> {
+  const { data, error } = await supabase.from("obra_orcamento").select("categoria, valor");
+  if (error) throw new Error(error.message);
+  const map = new Map<string, number>();
+  (data ?? []).forEach((r) => {
+    const cat = (r.categoria ?? "Outros") as string;
+    map.set(cat, (map.get(cat) ?? 0) + Number(r.valor ?? 0));
+  });
+  return Array.from(map.entries())
+    .map(([categoria, valor]) => ({ categoria, valor }))
+    .sort((a, b) => b.valor - a.valor);
+}
+
+// ---- Cadastro de nova obra (perfil Prefeitura) ----
+
+export interface NovaObraInput {
+  nome: string;
+  endereco: string;
+  bairro: string;
+  cep: string;
+  municipio: string;
+  estado: string;
+  empreiteira: string;
+  orgao_responsavel: string;
+  descricao: string;
+  status: Database["public"]["Enums"]["obra_status"];
+  valor_previsto: number;
+  valor_executado: number;
+  data_inicio: string | null;
+  data_prevista: string | null;
+}
+
+/** Faz upload de uma foto de obra para o bucket privado e devolve o caminho armazenado. */
+export async function uploadObraFoto(file: File): Promise<string> {
+  const ext = file.name.split(".").pop() || "jpg";
+  const path = `${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage.from("obras-fotos").upload(path, file, {
+    upsert: false,
+    contentType: file.type || undefined,
+  });
+  if (error) throw new Error(error.message);
+  return path;
+}
+
+/** Gera uma URL assinada de longa duração para exibir uma foto privada de obra. */
+export async function signedObraFotoUrl(path: string): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from("obras-fotos")
+    .createSignedUrl(path, 60 * 60 * 24 * 7);
+  if (error) return null;
+  return data?.signedUrl ?? null;
+}
+
+/** Cria a obra, registra fotos adicionais e devolve a obra criada. */
+export async function createObra(
+  input: NovaObraInput,
+  fotoPaths: string[],
+  usuario: { id: string | null; nome: string },
+): Promise<Obra> {
+  const principal = fotoPaths[0] ?? null;
+  const { data, error } = await supabase
+    .from("obras")
+    .insert({
+      nome: input.nome.trim(),
+      endereco: input.endereco.trim(),
+      bairro: input.bairro.trim(),
+      cep: input.cep.trim(),
+      municipio: input.municipio.trim(),
+      estado: input.estado.trim(),
+      empreiteira: input.empreiteira.trim(),
+      orgao_responsavel: input.orgao_responsavel.trim(),
+      descricao: input.descricao.trim(),
+      status: input.status,
+      valor_previsto: input.valor_previsto,
+      valor_executado: input.valor_executado,
+      data_inicio: input.data_inicio,
+      data_prevista: input.data_prevista,
+      foto_principal: principal,
+    })
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+  const obra = data as Obra;
+
+  const extras = fotoPaths.slice(1);
+  if (extras.length > 0) {
+    const rows = extras.map((url, i) => ({
+      obra_id: obra.id,
+      url,
+      legenda: `${input.nome.trim()} — foto ${i + 2}`,
+    }));
+    await supabase.from("obra_fotos").insert(rows);
+  }
+
+  await logAuditoria(obra.id, "Cadastrou nova obra", "obras", usuario.id, usuario.nome);
+  return obra;
+}
