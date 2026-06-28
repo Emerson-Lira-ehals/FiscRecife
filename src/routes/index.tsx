@@ -31,6 +31,8 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const { search } = useUI();
+  const { can } = useAuth();
+  const canCreate = can("prefeitura");
   const { data: obras, isLoading, error } = useQuery({ queryKey: ["obras"], queryFn: fetchObras });
 
   const filtered = (obras ?? []).filter((o) =>
