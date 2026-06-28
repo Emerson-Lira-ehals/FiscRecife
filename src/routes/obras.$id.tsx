@@ -25,8 +25,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ObraImage } from "@/components/ObraImage";
 import {
-  resolveFoto,
   formatCurrency,
   formatDate,
   formatDateTime,
