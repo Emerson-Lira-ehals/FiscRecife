@@ -60,7 +60,7 @@ function Index() {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
-        <div className="mb-6 flex items-end justify-between gap-4">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-foreground">
               Catálogo de obras
@@ -69,6 +69,13 @@ function Index() {
               {isLoading ? "Carregando..." : `${filtered.length} obra(s) encontrada(s)`}
             </p>
           </div>
+          {canCreate && (
+            <Button asChild>
+              <Link to="/obras/nova">
+                <Plus className="mr-1 h-4 w-4" /> Adicionar Nova Obra
+              </Link>
+            </Button>
+          )}
         </div>
 
         {error && (
