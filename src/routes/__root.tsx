@@ -15,6 +15,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
 import { UIProvider } from "@/lib/ui-context";
 import { AppShell } from "@/components/AppShell";
+import { registerServiceWorker } from "@/lib/pwa";
+import { startSyncEngine } from "@/lib/sync";
 
 function NotFoundComponent() {
   return (
