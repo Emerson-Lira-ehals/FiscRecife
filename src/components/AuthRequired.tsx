@@ -2,15 +2,19 @@ import { Link } from "@tanstack/react-router";
 import { Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
+import type { AppRole } from "@/lib/obra-utils";
 
 export function AuthRequired({
   children,
   adminOnly = false,
+  requireRole,
 }: {
   children: React.ReactNode;
   adminOnly?: boolean;
+  /** Allow admins (full access) or holders of this role. */
+  requireRole?: AppRole;
 }) {
-  const { isAuthenticated, isAdmin, loading } = useAuth();
+  const { isAuthenticated, isAdmin, can, loading } = useAuth();
 
   if (loading) {
     return (
