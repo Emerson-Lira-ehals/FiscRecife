@@ -1,10 +1,12 @@
 import { type ReactNode } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import { AppSidebar } from "@/components/AppSidebar";
+import { OfflineBanner } from "@/components/OfflineIndicator";
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen w-full flex-col bg-background">
+      <OfflineBanner />
       <AppHeader />
       <AppSidebar />
       <main className="flex-1">{children}</main>
