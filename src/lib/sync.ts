@@ -69,18 +69,21 @@ function isNetworkError(err: unknown): boolean {
 }
 
 async function runMutation(m: QueuedMutation): Promise<void> {
-  const q = supabase.from(m.table as never);
-  let builder: ReturnType<typeof q.insert> | ReturnType<typeof q.update> | ReturnType<typeof q.delete>;
+  // Table/op are dynamic here, so we work with an untyped builder.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const q: any = supabase.from(m.table as never);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let builder: any;
 
   switch (m.op) {
     case "insert":
-      builder = q.insert(m.payload as never);
+      builder = q.insert(m.payload);
       break;
     case "upsert":
-      builder = (q as { upsert: (v: unknown) => never }).upsert(m.payload as never);
+      builder = q.upsert(m.payload);
       break;
     case "update":
-      builder = q.update(m.payload as never);
+      builder = q.update(m.payload);
       break;
     case "delete":
       builder = q.delete();
@@ -91,7 +94,7 @@ async function runMutation(m: QueuedMutation): Promise<void> {
 
   if (m.match) {
     for (const [col, val] of Object.entries(m.match)) {
-      builder = (builder as { eq: (c: string, v: unknown) => typeof builder }).eq(col, val);
+      builder = builder.eq(col, val);
     }
   }
 
