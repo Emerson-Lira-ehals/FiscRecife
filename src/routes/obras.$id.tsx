@@ -166,8 +166,8 @@ function ObraDetail() {
       {/* Galeria */}
       <section className="mb-8">
         <div className="overflow-hidden rounded-xl border border-border bg-muted">
-          <img
-            src={resolveFoto(fotos[activeFoto]?.url ?? obra.foto_principal)}
+          <ObraImage
+            src={fotos[activeFoto]?.url ?? obra.foto_principal}
             alt={fotos[activeFoto]?.legenda ?? obra.nome}
             className="aspect-[16/9] w-full object-cover"
           />
