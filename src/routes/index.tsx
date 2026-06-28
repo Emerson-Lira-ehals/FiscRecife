@@ -102,8 +102,8 @@ function Index() {
                 className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-card)] transition hover:shadow-[var(--shadow-elevated)]"
               >
                 <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-                  <img
-                    src={resolveFoto(obra.foto_principal)}
+                  <ObraImage
+                    src={obra.foto_principal}
                     alt={obra.nome}
                     loading="lazy"
                     className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
