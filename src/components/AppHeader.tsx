@@ -53,6 +53,7 @@ export function AppHeader() {
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <SyncStatusChip />
           {isAuthenticated && role ? (
             <>
               <span className="hidden rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-accent-foreground md:inline">
