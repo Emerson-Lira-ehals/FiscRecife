@@ -43,7 +43,7 @@ export function AuthRequired({
     );
   }
 
-  if (adminOnly && !isAdmin) {
+  if ((adminOnly && !isAdmin) || (requireRole && !can(requireRole))) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-4">
         <div className="max-w-sm rounded-2xl border border-border bg-card p-8 text-center shadow-[var(--shadow-card)]">
@@ -52,7 +52,7 @@ export function AuthRequired({
           </div>
           <h2 className="text-lg font-semibold text-foreground">Permissão insuficiente</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Esta área é exclusiva do Administrador Master.
+            Você não tem permissão para acessar esta área.
           </p>
           <Button asChild className="mt-5 w-full">
             <Link to="/">Voltar</Link>
