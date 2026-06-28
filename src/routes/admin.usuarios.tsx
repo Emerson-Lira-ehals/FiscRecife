@@ -38,7 +38,7 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/admin/usuarios")({
   head: () => ({ meta: [{ title: "Usuários — Administração — FiscRecife" }] }),
   component: () => (
-    <AuthRequired adminOnly>
+    <AuthRequired requireRole="prefeitura">
       <UsuariosAdmin />
     </AuthRequired>
   ),
