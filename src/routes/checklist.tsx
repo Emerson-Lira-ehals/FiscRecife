@@ -90,16 +90,51 @@ function Checklist() {
   const canSwitch = isAdmin;
   const canEdit = isAdmin || lockedProfile !== null;
 
-  const [tasks, setTasks] = useState<Task[]>(SAMPLE_TASKS);
+  const { data: obras = [] } = useQuery({ queryKey: ["obras"], queryFn: fetchObras });
+
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [selectedObraId, setSelectedObraId] = useState<string>("");
+  const [obraSearch, setObraSearch] = useState("");
+  const [obraPickerOpen, setObraPickerOpen] = useState(false);
   const [profile, setProfile] = useState<Profile>(lockedProfile ?? "fiscal");
   const [query, setQuery] = useState("");
-  const [expanded, setExpanded] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(SAMPLE_TASKS.filter((t) => t.level === 0).map((t) => [t.id, true])),
-  );
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [menuOpen, setMenuOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Seleciona automaticamente a primeira obra do catálogo quando carregar.
+  useEffect(() => {
+    if (!selectedObraId && obras.length > 0) setSelectedObraId(obras[0].id);
+  }, [obras, selectedObraId]);
+
+  const selectedObra = useMemo(
+    () => obras.find((o) => o.id === selectedObraId) ?? null,
+    [obras, selectedObraId],
+  );
+
+  // Carrega a checklist específica da obra selecionada (isolada por obra).
+  useEffect(() => {
+    if (!selectedObraId) return;
+    const stored = loadObraTasks(selectedObraId);
+    const next = stored ?? SAMPLE_TASKS;
+    setTasks(next);
+    setExpanded(Object.fromEntries(next.filter((t) => t.level === 0).map((t) => [t.id, true])));
+  }, [selectedObraId]);
+
+  // Persiste alterações da checklist por obra.
+  useEffect(() => {
+    if (selectedObraId) saveObraTasks(selectedObraId, tasks);
+  }, [selectedObraId, tasks]);
+
+  const obrasFiltradas = useMemo(() => {
+    const s = obraSearch.trim().toLowerCase();
+    if (!s) return obras;
+    return obras.filter(
+      (o) => o.nome.toLowerCase().includes(s) || (o.bairro ?? "").toLowerCase().includes(s),
+    );
+  }, [obras, obraSearch]);
 
   // Sincroniza o perfil ativo com o login quando ele estiver travado.
   useEffect(() => {
