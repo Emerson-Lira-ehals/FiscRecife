@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Building2, MapPin } from "lucide-react";
+import { ArrowRight, Building2, MapPin, Plus } from "lucide-react";
 import { fetchObras } from "@/lib/queries";
 import { useUI } from "@/lib/ui-context";
+import { useAuth } from "@/lib/auth";
 import { StatusBadge } from "@/components/StatusBadge";
-import { resolveFoto, formatCurrency } from "@/lib/obra-utils";
+import { ObraImage } from "@/components/ObraImage";
+import { formatCurrency } from "@/lib/obra-utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
