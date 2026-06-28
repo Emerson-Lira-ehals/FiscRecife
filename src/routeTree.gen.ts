@@ -15,6 +15,7 @@ import { Route as ChecklistRouteImport } from './routes/checklist'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ObrasIdRouteImport } from './routes/obras.$id'
+import { Route as DashboardGeralRouteImport } from './routes/dashboard.geral'
 import { Route as AdminUsuariosRouteImport } from './routes/admin.usuarios'
 
 const RelatoriosRoute = RelatoriosRouteImport.update({
@@ -47,6 +48,11 @@ const ObrasIdRoute = ObrasIdRouteImport.update({
   path: '/obras/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardGeralRoute = DashboardGeralRouteImport.update({
+  id: '/geral',
+  path: '/geral',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
   id: '/admin/usuarios',
   path: '/admin/usuarios',
@@ -57,18 +63,20 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/checklist': typeof ChecklistRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/relatorios': typeof RelatoriosRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
+  '/dashboard/geral': typeof DashboardGeralRoute
   '/obras/$id': typeof ObrasIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/checklist': typeof ChecklistRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/relatorios': typeof RelatoriosRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
+  '/dashboard/geral': typeof DashboardGeralRoute
   '/obras/$id': typeof ObrasIdRoute
 }
 export interface FileRoutesById {
@@ -76,9 +84,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/checklist': typeof ChecklistRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof DashboardRouteWithChildren
   '/relatorios': typeof RelatoriosRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
+  '/dashboard/geral': typeof DashboardGeralRoute
   '/obras/$id': typeof ObrasIdRoute
 }
 export interface FileRouteTypes {
@@ -90,6 +99,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/relatorios'
     | '/admin/usuarios'
+    | '/dashboard/geral'
     | '/obras/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/relatorios'
     | '/admin/usuarios'
+    | '/dashboard/geral'
     | '/obras/$id'
   id:
     | '__root__'
@@ -108,6 +119,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/relatorios'
     | '/admin/usuarios'
+    | '/dashboard/geral'
     | '/obras/$id'
   fileRoutesById: FileRoutesById
 }
@@ -115,7 +127,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   ChecklistRoute: typeof ChecklistRoute
-  DashboardRoute: typeof DashboardRoute
+  DashboardRoute: typeof DashboardRouteWithChildren
   RelatoriosRoute: typeof RelatoriosRoute
   AdminUsuariosRoute: typeof AdminUsuariosRoute
   ObrasIdRoute: typeof ObrasIdRoute
@@ -165,6 +177,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ObrasIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/geral': {
+      id: '/dashboard/geral'
+      path: '/geral'
+      fullPath: '/dashboard/geral'
+      preLoaderRoute: typeof DashboardGeralRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/admin/usuarios': {
       id: '/admin/usuarios'
       path: '/admin/usuarios'
@@ -175,11 +194,23 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface DashboardRouteChildren {
+  DashboardGeralRoute: typeof DashboardGeralRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardGeralRoute: DashboardGeralRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   ChecklistRoute: ChecklistRoute,
-  DashboardRoute: DashboardRoute,
+  DashboardRoute: DashboardRouteWithChildren,
   RelatoriosRoute: RelatoriosRoute,
   AdminUsuariosRoute: AdminUsuariosRoute,
   ObrasIdRoute: ObrasIdRoute,
