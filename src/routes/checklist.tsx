@@ -228,8 +228,80 @@ function Checklist() {
 
       {/* Cabeçalho */}
       <div className="mb-6">
-        <p className="text-xs font-medium text-muted-foreground">Obra · Hospital Recife Norte</p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">Checklist da Obra</h1>
+        <p className="text-xs font-medium text-muted-foreground">
+          {selectedObra ? `Obra · ${selectedObra.bairro ?? selectedObra.municipio ?? ""}` : "Checklist Fiscal"}
+        </p>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">
+          {selectedObra ? selectedObra.nome : "Checklist da Obra"}
+        </h1>
+
+        {/* Seletor de obra com busca/autocomplete */}
+        <div className="relative mt-4 max-w-md">
+          <button
+            type="button"
+            onClick={() => setObraPickerOpen((o) => !o)}
+            className="flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 text-left text-sm font-medium text-foreground transition hover:border-primary/40"
+          >
+            <span className="flex items-center gap-2 truncate">
+              <Building2 className="h-4 w-4 shrink-0 text-primary" />
+              <span className="truncate">
+                {selectedObra ? selectedObra.nome : "Selecione uma obra"}
+              </span>
+            </span>
+            <ChevronDown className={cn("h-4 w-4 shrink-0 transition", obraPickerOpen && "rotate-180")} />
+          </button>
+          <AnimatePresence>
+            {obraPickerOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setObraPickerOpen(false)} />
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="absolute left-0 right-0 z-20 mt-2 overflow-hidden rounded-xl border border-border bg-popover shadow-[var(--shadow-lift)]"
+                >
+                  <div className="relative border-b border-border p-2">
+                    <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      autoFocus
+                      value={obraSearch}
+                      onChange={(e) => setObraSearch(e.target.value)}
+                      placeholder="Buscar obra pelo nome..."
+                      className="h-10 w-full rounded-lg border border-border bg-card pl-10 pr-3 text-sm outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div className="max-h-72 overflow-y-auto py-1">
+                    {obrasFiltradas.length === 0 && (
+                      <p className="px-4 py-3 text-sm text-muted-foreground">Nenhuma obra encontrada.</p>
+                    )}
+                    {obrasFiltradas.map((o) => (
+                      <button
+                        key={o.id}
+                        onClick={() => {
+                          setSelectedObraId(o.id);
+                          setObraPickerOpen(false);
+                          setObraSearch("");
+                        }}
+                        className={cn(
+                          "block w-full px-4 py-2.5 text-left text-sm transition hover:bg-secondary",
+                          o.id === selectedObraId
+                            ? "bg-accent font-semibold text-foreground"
+                            : "text-popover-foreground",
+                        )}
+                      >
+                        <span className="block truncate">{o.nome}</span>
+                        <span className="block truncate text-xs text-muted-foreground">
+                          {o.bairro ?? ""} {o.municipio ? `· ${o.municipio}` : ""}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+        </div>
+
 
         {/* Indicadores: Válido (verde) x Previsto (amarelo) */}
         <div className="mt-3 flex flex-wrap gap-3">
