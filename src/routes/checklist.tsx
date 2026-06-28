@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  Building2,
   Check,
   ChevronDown,
   Copy,
@@ -18,6 +20,8 @@ import {
 import { toast } from "sonner";
 import { AuthRequired } from "@/components/AuthRequired";
 import { useAuth } from "@/lib/auth";
+import { fetchObras } from "@/lib/queries";
+import type { Obra } from "@/lib/obra-utils";
 import { cn } from "@/lib/utils";
 import {
   SAMPLE_TASKS,
@@ -30,6 +34,26 @@ import {
   type Task,
   type TaskStatus,
 } from "@/lib/checklist-tasks";
+
+const STORAGE_PREFIX = "fiscrecife:checklist:";
+
+function loadObraTasks(obraId: string): Task[] | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_PREFIX + obraId);
+    if (!raw) return null;
+    return JSON.parse(raw) as Task[];
+  } catch {
+    return null;
+  }
+}
+
+function saveObraTasks(obraId: string, tasks: Task[]) {
+  try {
+    localStorage.setItem(STORAGE_PREFIX + obraId, JSON.stringify(tasks));
+  } catch {
+    /* armazenamento indisponível */
+  }
+}
 
 export const Route = createFileRoute("/checklist")({
   head: () => ({
