@@ -4,12 +4,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const ROLES = ["admin", "prefeitura", "fiscal", "gestor", "agente"] as const;
 
-async function assertAdmin(context: { supabase: any; userId: string }) {
-  const { data, error } = await context.supabase.rpc("is_admin", {
+async function assertCanManageUsers(context: { supabase: any; userId: string }) {
+  const { data, error } = await context.supabase.rpc("can_manage_users", {
     _user_id: context.userId,
   });
   if (error) throw new Error(error.message);
-  if (!data) throw new Error("Acesso negado: somente administradores.");
+  if (!data) throw new Error("Acesso negado: somente administradores ou prefeitura.");
 }
 
 export const adminCreateUser = createServerFn({ method: "POST" })
