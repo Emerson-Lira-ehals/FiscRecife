@@ -6,6 +6,7 @@ import { useUI } from "@/lib/ui-context";
 import { useAuth } from "@/lib/auth";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ObraImage } from "@/components/ObraImage";
+import { ObrasMapa } from "@/components/ObrasMapa";
 import { formatCurrency } from "@/lib/obra-utils";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
