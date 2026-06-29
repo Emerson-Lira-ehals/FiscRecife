@@ -19,8 +19,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AuthRequired } from "@/components/AuthRequired";
+import { EvidenciaDialog } from "@/components/EvidenciaDialog";
 import { useAuth } from "@/lib/auth";
-import { fetchObras } from "@/lib/queries";
+import { fetchObras, fetchAtividades, type ObraAtividade } from "@/lib/queries";
 import type { Obra } from "@/lib/obra-utils";
 import { cn } from "@/lib/utils";
 import {
