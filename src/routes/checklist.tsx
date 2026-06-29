@@ -103,7 +103,21 @@ function Checklist() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
+  const [clip, setClip] = useState<{ task: Task; macroNome: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Atividades reais da obra (mesma base de dados das evidências da etapa inicial).
+  const { data: dbAtividades = [], refetch: refetchAtividades } = useQuery({
+    queryKey: ["atividades", selectedObraId],
+    queryFn: () => fetchAtividades(selectedObraId),
+    enabled: !!selectedObraId,
+  });
+  const atividadeByNome = useMemo(() => {
+    const m = new Map<string, ObraAtividade>();
+    dbAtividades.forEach((a) => m.set(a.nome.trim().toLowerCase(), a));
+    return m;
+  }, [dbAtividades]);
+  const matchAtividade = (t: Task) => atividadeByNome.get(t.name.trim().toLowerCase()) ?? null;
 
   // Seleciona automaticamente a primeira obra do catálogo quando carregar.
   useEffect(() => {
