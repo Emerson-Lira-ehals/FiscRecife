@@ -574,6 +574,8 @@ function MacroCard({
   children,
   profile,
   onToggleStatus,
+  matchAtividade,
+  onAttach,
 }: {
   macro: Task;
   prog: Progress;
@@ -582,6 +584,8 @@ function MacroCard({
   children: Task[];
   profile: Profile;
   onToggleStatus: (t: Task) => void;
+  matchAtividade: (t: Task) => ObraAtividade | null;
+  onAttach: (t: Task) => void;
 }) {
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-soft)]">
