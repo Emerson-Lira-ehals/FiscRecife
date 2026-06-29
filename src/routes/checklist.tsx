@@ -509,6 +509,16 @@ function Checklist() {
           }}
         />
       )}
+
+      <EvidenciaDialog
+        open={!!clip}
+        atividade={clip ? matchAtividade(clip.task) : null}
+        obraId={selectedObraId}
+        fallbackNome={clip?.task.name}
+        fallbackMacroetapa={clip?.macroNome}
+        onClose={() => setClip(null)}
+        onChanged={() => refetchAtividades()}
+      />
     </div>
   );
 }
