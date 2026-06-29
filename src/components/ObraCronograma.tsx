@@ -1,23 +1,16 @@
 import { useMemo, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ListChecks,
-  Loader2,
   CheckCircle2,
-  XCircle,
   Upload,
-  Paperclip,
-  MapPin,
   Image as ImageIcon,
+  Loader2,
   Info,
 } from "lucide-react";
-import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import {
   fetchAtividades,
-  enviarAtividadeParaValidacao,
-  validarAtividade,
-  uploadEvidencia,
   signedEvidenciaUrl,
   type ObraAtividade,
 } from "@/lib/queries";
@@ -29,16 +22,8 @@ import {
   formatDate,
 } from "@/lib/obra-utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { EvidenciaDialog } from "@/components/EvidenciaDialog";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const TONE: Record<string, string> = {
@@ -50,7 +35,7 @@ const TONE: Record<string, string> = {
 
 export function ObraCronograma({ obraId }: { obraId: string }) {
   const qc = useQueryClient();
-  const { role, user, profile } = useAuth();
+  const { role } = useAuth();
   const atividadesQ = useQuery({
     queryKey: ["atividades", obraId],
     queryFn: () => fetchAtividades(obraId),
@@ -59,8 +44,7 @@ export function ObraCronograma({ obraId }: { obraId: string }) {
   const canGestor = role === "gestor" || role === "admin" || role === "prefeitura";
   const canFiscal = role === "fiscal" || role === "admin" || role === "prefeitura";
 
-  const [enviar, setEnviar] = useState<ObraAtividade | null>(null);
-  const [reprovar, setReprovar] = useState<ObraAtividade | null>(null);
+  const [evid, setEvid] = useState<ObraAtividade | null>(null);
 
   const atividades = atividadesQ.data ?? [];
   const grupos = useMemo(() => {
@@ -79,22 +63,6 @@ export function ObraCronograma({ obraId }: { obraId: string }) {
     qc.invalidateQueries({ queryKey: ["obras"] });
     qc.invalidateQueries({ queryKey: ["auditoria", obraId] });
   };
-
-  const aprovarMut = useMutation({
-    mutationFn: (a: ObraAtividade) =>
-      validarAtividade({
-        atividadeId: a.id,
-        obraId,
-        aprovar: true,
-        usuarioId: user!.id,
-        usuarioNome: profile?.nome || "Fiscal",
-      }),
-    onSuccess: () => {
-      invalidate();
-      toast.success("Atividade aprovada. Avanço físico atualizado.");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
 
   const totalPeso = atividades.reduce((s, a) => s + Number(a.peso), 0);
 
@@ -178,33 +146,20 @@ export function ObraCronograma({ obraId }: { obraId: string }) {
                           </div>
                         )}
 
-                        {/* Ações */}
+                        {/* Ações — mesmo fluxo do botão de clipe da área do Fiscal */}
                         <div className="mt-2 flex flex-wrap gap-2">
                           {canGestor &&
                             (a.status === "nao_iniciada" ||
                               a.status === "em_execucao" ||
                               a.status === "rejeitada") && (
-                              <Button size="sm" variant="outline" onClick={() => setEnviar(a)}>
+                              <Button size="sm" variant="outline" onClick={() => setEvid(a)}>
                                 <Upload className="mr-1 h-3.5 w-3.5" /> Enviar para validação
                               </Button>
                             )}
                           {canFiscal && a.status === "aguardando_validacao" && (
-                            <>
-                              <Button
-                                size="sm"
-                                onClick={() => aprovarMut.mutate(a)}
-                                disabled={aprovarMut.isPending}
-                              >
-                                <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Aprovar
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setReprovar(a)}
-                              >
-                                <XCircle className="mr-1 h-3.5 w-3.5" /> Reprovar
-                              </Button>
-                            </>
+                            <Button size="sm" onClick={() => setEvid(a)}>
+                              <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Validar evidência
+                            </Button>
                           )}
                         </div>
                       </div>
@@ -220,17 +175,12 @@ export function ObraCronograma({ obraId }: { obraId: string }) {
         </div>
       )}
 
-      <EnviarDialog
-        atividade={enviar}
+      <EvidenciaDialog
+        open={!!evid}
+        atividade={evid}
         obraId={obraId}
-        onClose={() => setEnviar(null)}
-        onDone={invalidate}
-      />
-      <ReprovarDialog
-        atividade={reprovar}
-        obraId={obraId}
-        onClose={() => setReprovar(null)}
-        onDone={invalidate}
+        onClose={() => setEvid(null)}
+        onChanged={invalidate}
       />
     </section>
   );
@@ -253,189 +203,5 @@ function EvidenciaLink({ path }: { path: string }) {
       {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <ImageIcon className="h-3 w-3" />}
       ver foto
     </button>
-  );
-}
-
-function EnviarDialog({
-  atividade,
-  obraId,
-  onClose,
-  onDone,
-}: {
-  atividade: ObraAtividade | null;
-  obraId: string;
-  onClose: () => void;
-  onDone: () => void;
-}) {
-  const { user, profile } = useAuth();
-  const [comentario, setComentario] = useState("");
-  const [foto, setFoto] = useState<File | null>(null);
-  const [doc, setDoc] = useState<File | null>(null);
-  const [gps, setGps] = useState("");
-
-  const mut = useMutation({
-    mutationFn: async () => {
-      const fotoPath = await uploadEvidencia(obraId, foto!);
-      let docPath: string | null = null;
-      if (doc) docPath = await uploadEvidencia(obraId, doc);
-      await enviarAtividadeParaValidacao({
-        atividadeId: atividade!.id,
-        obraId,
-        comentario,
-        fotoPath,
-        docPath,
-        gps: gps.trim() || null,
-        usuarioId: user!.id,
-        usuarioNome: profile?.nome || "Gestor",
-      });
-    },
-    onSuccess: () => {
-      toast.success("Atividade enviada para validação do fiscal.");
-      reset();
-      onDone();
-      onClose();
-    },
-    onError: (e: Error) => toast.error(e.message || "Falha ao enviar."),
-  });
-
-  const reset = () => {
-    setComentario("");
-    setFoto(null);
-    setDoc(null);
-    setGps("");
-  };
-
-  const captureGps = () => {
-    if (!navigator.geolocation) return toast.error("GPS indisponível.");
-    navigator.geolocation.getCurrentPosition(
-      (p) => setGps(`${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`),
-      () => toast.error("Não foi possível obter a localização."),
-    );
-  };
-
-  return (
-    <Dialog open={!!atividade} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Enviar evidência · {atividade?.nome}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <p className="text-xs text-muted-foreground">
-            Foto e comentário são obrigatórios. A atividade ficará aguardando aprovação do fiscal.
-          </p>
-          <div>
-            <Label className="mb-1.5 block text-xs">Foto da execução *</Label>
-            <Input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={(e) => setFoto(e.target.files?.[0] ?? null)}
-            />
-          </div>
-          <div>
-            <Label className="mb-1.5 block text-xs">Comentário *</Label>
-            <Textarea
-              value={comentario}
-              onChange={(e) => setComentario(e.target.value)}
-              placeholder="Descreva o que foi executado..."
-              rows={3}
-            />
-          </div>
-          <div>
-            <Label className="mb-1.5 block text-xs">Documento (opcional)</Label>
-            <Input
-              type="file"
-              accept=".pdf,.doc,.docx,.xlsx,.xls"
-              onChange={(e) => setDoc(e.target.files?.[0] ?? null)}
-            />
-          </div>
-          <div>
-            <Label className="mb-1.5 block text-xs">Localização GPS (opcional)</Label>
-            <div className="flex gap-2">
-              <Input value={gps} onChange={(e) => setGps(e.target.value)} placeholder="lat, long" />
-              <Button type="button" variant="outline" size="icon" onClick={captureGps}>
-                <MapPin className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button
-            disabled={mut.isPending || !foto || comentario.trim().length < 3}
-            onClick={() => mut.mutate()}
-          >
-            {mut.isPending ? (
-              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-            ) : (
-              <Paperclip className="mr-1 h-4 w-4" />
-            )}
-            Enviar para validação
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function ReprovarDialog({
-  atividade,
-  obraId,
-  onClose,
-  onDone,
-}: {
-  atividade: ObraAtividade | null;
-  obraId: string;
-  onClose: () => void;
-  onDone: () => void;
-}) {
-  const { user, profile } = useAuth();
-  const [justificativa, setJustificativa] = useState("");
-
-  const mut = useMutation({
-    mutationFn: () =>
-      validarAtividade({
-        atividadeId: atividade!.id,
-        obraId,
-        aprovar: false,
-        justificativa,
-        usuarioId: user!.id,
-        usuarioNome: profile?.nome || "Fiscal",
-      }),
-    onSuccess: () => {
-      toast.success("Atividade reprovada.");
-      setJustificativa("");
-      onDone();
-      onClose();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  return (
-    <Dialog open={!!atividade} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Reprovar · {atividade?.nome}</DialogTitle>
-        </DialogHeader>
-        <div>
-          <Label className="mb-1.5 block text-xs">Justificativa *</Label>
-          <Textarea
-            value={justificativa}
-            onChange={(e) => setJustificativa(e.target.value)}
-            placeholder="Explique o motivo da reprovação..."
-            rows={3}
-          />
-        </div>
-        <DialogFooter>
-          <Button
-            variant="destructive"
-            disabled={mut.isPending || justificativa.trim().length < 3}
-            onClick={() => mut.mutate()}
-          >
-            {mut.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-            Confirmar reprovação
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
