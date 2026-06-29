@@ -477,6 +477,8 @@ function Checklist() {
               children={children}
               profile={profile}
               onToggleStatus={toggleStatus}
+              matchAtividade={matchAtividade}
+              onAttach={(task) => setClip({ task, macroNome: macro.name })}
             />
           );
         })}
