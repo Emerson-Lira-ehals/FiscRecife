@@ -152,6 +152,8 @@ function Index() {
           </div>
         )}
       </section>
+
+      <ObrasMapa />
     </div>
   );
 }
