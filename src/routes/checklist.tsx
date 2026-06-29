@@ -19,8 +19,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AuthRequired } from "@/components/AuthRequired";
+import { EvidenciaDialog } from "@/components/EvidenciaDialog";
 import { useAuth } from "@/lib/auth";
-import { fetchObras } from "@/lib/queries";
+import { fetchObras, fetchAtividades, type ObraAtividade } from "@/lib/queries";
 import type { Obra } from "@/lib/obra-utils";
 import { cn } from "@/lib/utils";
 import {
@@ -102,7 +103,21 @@ function Checklist() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
+  const [clip, setClip] = useState<{ task: Task; macroNome: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Atividades reais da obra (mesma base de dados das evidências da etapa inicial).
+  const { data: dbAtividades = [], refetch: refetchAtividades } = useQuery({
+    queryKey: ["atividades", selectedObraId],
+    queryFn: () => fetchAtividades(selectedObraId),
+    enabled: !!selectedObraId,
+  });
+  const atividadeByNome = useMemo(() => {
+    const m = new Map<string, ObraAtividade>();
+    dbAtividades.forEach((a) => m.set(a.nome.trim().toLowerCase(), a));
+    return m;
+  }, [dbAtividades]);
+  const matchAtividade = (t: Task) => atividadeByNome.get(t.name.trim().toLowerCase()) ?? null;
 
   // Seleciona automaticamente a primeira obra do catálogo quando carregar.
   useEffect(() => {
@@ -462,6 +477,8 @@ function Checklist() {
               children={children}
               profile={profile}
               onToggleStatus={toggleStatus}
+              matchAtividade={matchAtividade}
+              onAttach={(task) => setClip({ task, macroNome: macro.name })}
             />
           );
         })}
@@ -492,6 +509,16 @@ function Checklist() {
           }}
         />
       )}
+
+      <EvidenciaDialog
+        open={!!clip}
+        atividade={clip ? matchAtividade(clip.task) : null}
+        obraId={selectedObraId}
+        fallbackNome={clip?.task.name}
+        fallbackMacroetapa={clip?.macroNome}
+        onClose={() => setClip(null)}
+        onChanged={() => refetchAtividades()}
+      />
     </div>
   );
 }
@@ -547,6 +574,8 @@ function MacroCard({
   children,
   profile,
   onToggleStatus,
+  matchAtividade,
+  onAttach,
 }: {
   macro: Task;
   prog: Progress;
@@ -555,6 +584,8 @@ function MacroCard({
   children: Task[];
   profile: Profile;
   onToggleStatus: (t: Task) => void;
+  matchAtividade: (t: Task) => ObraAtividade | null;
+  onAttach: (t: Task) => void;
 }) {
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card shadow-[var(--shadow-soft)]">
@@ -608,7 +639,14 @@ function MacroCard({
                 <p className="px-5 py-4 text-sm text-muted-foreground">Nenhuma micro etapa.</p>
               ) : (
                 children.map((task) => (
-                  <TaskRow key={task.id} task={task} profile={profile} onToggle={onToggleStatus} />
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    profile={profile}
+                    onToggle={onToggleStatus}
+                    atividade={matchAtividade(task)}
+                    onAttach={() => onAttach(task)}
+                  />
                 ))
               )}
             </div>
@@ -648,11 +686,17 @@ function TaskRow({
   task,
   profile,
   onToggle,
+  atividade,
+  onAttach,
 }: {
   task: Task;
   profile: Profile;
   onToggle: (t: Task) => void;
+  atividade: ObraAtividade | null;
+  onAttach: () => void;
 }) {
+  const temEvidencia =
+    !!atividade && (!!atividade.evidencia_foto || atividade.status !== "nao_iniciada");
   return (
     <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-border px-4 py-3 last:border-b-0 sm:px-5">
       <StatusBox status={task.status} onClick={() => onToggle(task)} />
@@ -672,10 +716,18 @@ function TaskRow({
         </div>
       </div>
       <button
-        aria-label="Anexar"
-        className="rounded-lg p-2 text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+        onClick={onAttach}
+        aria-label="Anexar evidência"
+        title={temEvidencia ? "Ver / gerenciar evidência" : "Anexar evidência"}
+        className={cn(
+          "relative rounded-lg p-2 transition hover:bg-secondary hover:text-foreground",
+          temEvidencia ? "text-primary" : "text-muted-foreground",
+        )}
       >
         <Paperclip className="h-4 w-4" />
+        {temEvidencia && (
+          <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-primary" />
+        )}
       </button>
     </div>
   );

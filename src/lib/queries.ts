@@ -212,6 +212,54 @@ export async function signedEvidenciaUrl(path: string): Promise<string | null> {
   return data?.signedUrl ?? null;
 }
 
+export interface CriarAtividadeVinculadaInput {
+  obraId: string;
+  macroetapa: string;
+  nome: string;
+  usuarioId: string | null;
+  usuarioNome: string;
+}
+
+/**
+ * Cria uma atividade no cronograma (obra_atividades) vinculada a um item da
+ * checklist fiscal, permitindo anexar evidências pela mesma base de dados da
+ * etapa inicial. Peso 0 para não interferir no avanço físico automático.
+ */
+export async function criarAtividadeVinculada(
+  input: CriarAtividadeVinculadaInput,
+): Promise<ObraAtividade> {
+  const { data: last } = await supabase
+    .from("obra_atividades")
+    .select("ordem")
+    .eq("obra_id", input.obraId)
+    .order("ordem", { ascending: false })
+    .limit(1);
+  const nextOrdem = (last?.[0]?.ordem ?? 0) + 1;
+
+  const { data, error } = await supabase
+    .from("obra_atividades")
+    .insert({
+      obra_id: input.obraId,
+      macroetapa: input.macroetapa || "Checklist",
+      nome: input.nome.trim(),
+      ordem: nextOrdem,
+      peso: 0,
+      status: "nao_iniciada",
+    })
+    .select("*")
+    .single();
+  if (error) throw new Error(error.message);
+
+  await logAuditoria(
+    input.obraId,
+    "Vinculou atividade da checklist ao cronograma",
+    "obra_atividades",
+    input.usuarioId,
+    input.usuarioNome,
+  );
+  return data as ObraAtividade;
+}
+
 export interface EnviarAtividadeInput {
   atividadeId: string;
   obraId: string;
