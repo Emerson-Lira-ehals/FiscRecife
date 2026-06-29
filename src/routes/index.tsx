@@ -42,17 +42,17 @@ function Index() {
   return (
     <div>
       <section
-        className="border-b border-border px-4 py-12 text-navy-foreground sm:py-16"
+        className="border-b border-border px-4 py-6 text-navy-foreground sm:py-8"
         style={{ background: "var(--gradient-navy)" }}
       >
         <div className="mx-auto max-w-6xl">
           <span className="inline-flex items-center gap-2 rounded-full bg-primary/20 px-3 py-1 text-xs font-medium text-primary-foreground">
             <Building2 className="h-3.5 w-3.5" /> Portal de Transparência
           </span>
-          <h1 className="mt-4 max-w-2xl text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
+          <h1 className="mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
             Obras públicas do Recife, acompanhadas em tempo real
           </h1>
-          <p className="mt-3 max-w-xl text-sm text-navy-foreground/70 sm:text-base">
+          <p className="mt-2 max-w-xl text-sm text-navy-foreground/70">
             Transparência, eficiência e confiabilidade no monitoramento de cada obra da cidade.
             Consulte andamento físico, execução financeira e cronograma.
           </p>
@@ -109,7 +109,7 @@ function Index() {
                     className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                   />
                   <div className="absolute left-3 top-3">
-                    <StatusBadge status={obra.status} className="shadow" />
+                    <StatusBadge status={obra.status} className="bg-white border border-border/60 shadow" />
                   </div>
                 </div>
                 <div className="flex flex-1 flex-col p-4">
