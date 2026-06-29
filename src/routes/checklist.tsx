@@ -639,7 +639,14 @@ function MacroCard({
                 <p className="px-5 py-4 text-sm text-muted-foreground">Nenhuma micro etapa.</p>
               ) : (
                 children.map((task) => (
-                  <TaskRow key={task.id} task={task} profile={profile} onToggle={onToggleStatus} />
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    profile={profile}
+                    onToggle={onToggleStatus}
+                    atividade={matchAtividade(task)}
+                    onAttach={() => onAttach(task)}
+                  />
                 ))
               )}
             </div>
